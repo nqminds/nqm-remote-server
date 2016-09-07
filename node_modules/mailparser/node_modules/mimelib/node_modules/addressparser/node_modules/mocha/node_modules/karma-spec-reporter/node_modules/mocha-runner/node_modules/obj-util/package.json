@@ -1,0 +1,29 @@
+{
+  "name": "obj-util",
+  "version": "1.0.0",
+  "description": "A simple helper to set/get keys from objects using a string path like 'some.key.here'",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/royriojas/obj-util.git"
+  },
+  "keywords": [
+    "obj",
+    "util",
+    "setKey",
+    "getKey",
+    "set",
+    "key",
+    "using",
+    "path"
+  ],
+  "author": "Roy Riojas",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/royriojas/obj-util/issues"
+  },
+  "homepage": "https://github.com/royriojas/obj-util"
+}

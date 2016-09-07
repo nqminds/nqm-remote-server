@@ -1,0 +1,18 @@
+{
+  "hostname": "localhost",
+  "port": 8125,
+  "xrhUrl": "wss://tbx.nqminds.com/websocket",
+  "ssl": true,
+  "autoReconnectTimer": 5000,
+  "hostURL": "http://localhost:8125",
+  "heartbeatInterval": 10000,
+
+  "actionsDatasetId": "ByeUj8pmw",
+  "appsInstalledDatasetId": "Sygn6vamP",
+  "configurationDatasetId": "H1xuke1Bw",
+  
+  "appsPath": "./apps",
+  "appDownloadPath": "./appDownload",
+  "nodePath": "",
+  "authServerURL": "https://tdx.nqminds.com/auth"
+}

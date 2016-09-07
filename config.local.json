@@ -1,0 +1,18 @@
+{
+  "hostname": "localhost",
+  "port": 8125,
+  "xrhUrl": "ws://localhost:2222/websocket",
+  "ssl": false,
+  "autoReconnectTimer": 5000,
+  "hostURL": "http://localhost:8125",
+  "heartbeatInterval": 10000,
+
+  "actionsDatasetId": "ByeUj8pmw",
+  "appsInstalledDatasetId": "Sygn6vamP",
+  "configurationDatasetId": "SJg5jGA7v",
+  
+  "appsPath": "./apps",
+  "appDownloadPath": "./appDownload",
+  "nodePath": "",
+  "authServerURL": "https://localhost:4443/auth"
+}
