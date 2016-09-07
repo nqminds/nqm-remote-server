@@ -37,7 +37,6 @@ module.exports = (function() {
 
   var Inbox = function(config, workingDir){
     this._config = config;
-    this._tdxAPI =  (new (require("nqm-api-tdx"))(config));
     this._sync = null;
 	_workingDir = workingDir;
   }
@@ -57,11 +56,11 @@ module.exports = (function() {
     });
   }
   /*---------------------------end upsert function ---------------------------*/
-  Inbox.prototype.getInbox = function(tdxToken,cb){
+  Inbox.prototype.getInbox = function(tdxAPI, cb){
     var self = this;
     log(self._config.byodimapboxes_ID);
     log('authenticate');
-    self._tdxAPI.query("datasets/" + self._config.byodimapboxes_ID + "/data", null, null, null, tdxToken,function (qerr, data) {
+    tdxAPI.query("datasets/" + self._config.emailtable_ID + "/data", null, null, null, function (qerr, data) {
       if (qerr){
         cb(qerr,null);
       }
@@ -70,13 +69,6 @@ module.exports = (function() {
         for(let i=0;i<data_array.length;i++){
           var mailparser = new MailParser({streamAttachments:true});
           mailparser.on("end", function(mail_object){
-            if(mail_object.attachments != undefined) {
-              mail_object.attachments.forEach(function (attachment) {
-                log('attachments', attachment.fileName);
-                var output = fs.createWriteStream(path.join(__dirname,'public/attachments/'+attachment.generatedFileName));
-                attachment.stream.pipe(output);
-              });
-            }
             if(mail_object.html === undefined){
               data_array[i]['text'] = mail_object.text;
             }
@@ -228,9 +220,9 @@ module.exports = (function() {
     })
   }
   /*--------------------------- END send function ----------------------------*/
-  Inbox.prototype.getAttachmentsList = function(tdxToken,cb){
+  Inbox.prototype.getAttachmentsList = function(cb){
     var self = this;
-    self._tdxAPI.query("datasets/" + self._config.byodattachment_ID + "/data", null, null, null, tdxToken,function (qerr, data) {
+    self._tdxAPI.query("datasets/" + self._config.byodattachment_ID + "/data", null, null, null, self._config.byodimapboxes_token,function (qerr, data) {
       if(qerr) {
         log(qerr);
         cb(qerr,null);
