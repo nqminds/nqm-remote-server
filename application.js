@@ -21,12 +21,13 @@ module.exports = (function() {
   var bodyParser = require('body-parser');
   var _emaildriver = require("./email.js")
   var emailconfig = require("./config.inbox.json");
-  var _email =new _emaildriver(emailconfig);
+  var _email = null;
   var _filedriver = require('./fileCache');
   var _fileCache = new _filedriver(emailconfig);
   var syncdriver = require('./sync');
-  var _sync = null;
   var fs = require('fs');
+  var _sync = null;
+  var _workingDir = null;
 
   fs.stat('./'+tokenPath,function(err,stats){
     if(!err) {
@@ -54,10 +55,26 @@ module.exports = (function() {
     }
   };
   
-  var _start = function(config) {  
+  var _start = function(_env, config) {  
 
     var app = express();
-  
+
+	_workingDir = _env.homedir+"/."+_env.name;
+	_email =new _emaildriver(emailconfig, _workingDir);
+
+	try{
+		fs.statSync(_workingDir);
+	} catch(err) {
+		if (err && err.errno!=-2)
+        	throw err;
+		
+		try{
+			fs.mkdirSync(_workingDir);
+		} catch(err) {
+			throw err;
+		}
+	}
+ 
     app.set("views", __dirname + "/views");
     app.set('view engine', 'jade');
     app.use(express.static(__dirname  + '/public'));

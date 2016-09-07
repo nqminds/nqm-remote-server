@@ -17,6 +17,7 @@ module.exports = (function() {
   var path = require('path');
   var MailParser = require('mailparser').MailParser;
   var emlPath = path.join(__dirname,'mailparser/email.eml');
+  var _workingDir = null;
 
   var handleError = function(err, response, log, cb) {
     if (err || response.statusCode !== 200 || (response.body && response.body.error)) {
@@ -34,10 +35,11 @@ module.exports = (function() {
     }
   };
 
-  var Inbox = function(config){
+  var Inbox = function(config, workingDir){
     this._config = config;
     this._tdxAPI =  (new (require("nqm-api-tdx"))(config));
     this._sync = null;
+	_workingDir = workingDir;
   }
   /*-------------------------- upsert function -----------------------*/
   function upsertDataBulk(commandHost, accessToken, datasetId, data, cb) {
@@ -104,7 +106,7 @@ module.exports = (function() {
           //fs.createReadStream(emlPath).pipe(mailparser);
         }
         cb(null,data_array);
-        fs.writeFile(path.join(__dirname,'inbox.json'),JSON.stringify(data_array,null,4),{encoding:"utf8",flag:"w"},function(err){
+		fs.writeFile(path.join(_workingDir,'inbox.json'),JSON.stringify(data_array,null,4),{encoding:"utf8",flag:"w"},function(err){
           if(err)
             log(err);
           else
@@ -235,7 +237,7 @@ module.exports = (function() {
       }
       else{
         log('attachemnt ids are ');
-        fs.writeFile(path.join(__dirname,'attachments.json'),JSON.stringify(data,null,4),{encoding:"utf8",flag:"w"},function(err){
+        fs.writeFile(path.join(_workingDir,'attachments.json'),JSON.stringify(data,null,4),{encoding:"utf8",flag:"w"},function(err){
           if(err)
             cb(err,null);
           else
