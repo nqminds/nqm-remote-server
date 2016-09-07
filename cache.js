@@ -118,7 +118,7 @@ function getDocs(){
   //console.log(ans);
   return ans;
 }
-exports.getAttachments = function(token,fileList,cb){
+exports.getAttachments = function(token,cb){
   createFolder(attachmentPath);
   var docs = getDocs();
   var docNames = [];
@@ -134,63 +134,7 @@ exports.getAttachments = function(token,fileList,cb){
       docNames.push(docNameObj);
     })
   }
-
-  var error = null;
-  if(fileList.length>0){
-    _.forEach(fileList,function(element){
-      var fileName = _.pick(element,["attachmentId"])["attachmentId"];
-      var fileEtx = _.pick(element,["type"])["type"];
-
-      //var url = 'https://q.nqminds.com/v1/datasets?access_token=' + token + '&filter={"baseType":"rawFile","id":"'+fileName+'"}';
-      //console.log('url is');
-      //console.log(url);
-      //https.get(url,function(res){
-      //  var body = '';
-      //  res.on('data',function(chunk){
-      //    body += chunk;
-      //  })
-      //  res.on('end',function(){
-      //    var fileObj = JSON.parse(body);
-      //    console.log('fileObj is ');
-      //    console.log(fileObj);
-      //    console.log(fileObj[0].id);
-      //    //var fileLink = 'https://q.nqminds.com/v1/resource/' + fileObj[0].id + '?access_token=' + token;
-      //    //var file = "./attachments/"+fileObj[0].store;
-      //    //fs.stat(file,function(err,stats){
-      //    //    if(err){
-      //    //      console.log(fileName + " does not exist in attachment, downloading");
-      //    //      downloadFile(fileLink, file,function(err){
-      //    //        if(err)
-      //    //        cb(err);
-      //    //      })
-      //    //    }
-      //    //    else
-      //    //      cb(null);
-      //    //})
-      //  })
-      //})
-
-      var url = 'https://q.nqminds.com/v1/resource/' + fileName + '?access_token=' + token;
-      fileName = path.join(__dirname,attachmentPath)+fileName+'.'+fileEtx;
-      console.log(url);
-      console.log(fileName);
-      fs.stat(fileName,function(err,stats){
-        if(err){
-          console.log(fileName + " does not exist in attachment, downloading");
-          downloadFile(url, fileName,function(err){
-            if(err)
-              error = err;
-          })
-        }
-      })
-    })
-  }
-  if(error === null) {
-    console.log('attachments no error');
-    cb(null,docNames);
-  }
-  else
-    cb(error,null);
+  cb(docNames);
 }
 
 exports.getFiles = function(cb, token) {

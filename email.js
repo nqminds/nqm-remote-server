@@ -16,8 +16,8 @@ module.exports = (function() {
   var _ = require('lodash');
   var path = require('path');
   var MailParser = require('mailparser').MailParser;
-  var emlPath = path.join(__dirname,'mailparser/email.eml');
   var _workingDir = null;
+  var dirname = path.join(__dirname,'public/');
 
   var handleError = function(err, response, log, cb) {
     if (err || response.statusCode !== 200 || (response.body && response.body.error)) {
@@ -41,6 +41,17 @@ module.exports = (function() {
     this._sync = null;
 	_workingDir = workingDir;
   }
+
+  function createFolder(name) {
+    var folderPath = path.join(dirname, name);
+    try {
+      if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath);
+      }
+    } catch (e) {
+      console.log("createFolder: ",e);
+    }
+  }
   /*-------------------------- upsert function -----------------------*/
   function upsertDataBulk(commandHost, accessToken, datasetId, data, cb) {
     var url = util.format("%s/commandSync/dataset/data/upsertMany", commandHost);
@@ -57,62 +68,83 @@ module.exports = (function() {
     });
   }
   /*---------------------------end upsert function ---------------------------*/
+  /*--------------------------- get One Mail mailparsered---------------------*/
+  Inbox.prototype.getOneMail = function(mailUid,cb) {
+    var mailFile = fs.readFileSync(path.join(_workingDir,mailUid+'.log'));
+    log('read from the file:');
+    log(JSON.parse(mailFile));
+    var mailparser = new MailParser({streamAttachments: true});
+    mailparser.on("end", function (mail_object) {
+      createFolder('attachments');
+      if (mail_object.attachments != undefined) {
+        mail_object.attachments.forEach(function (attachment) {
+          log('attachments', attachment.fileName);
+          var output = fs.createWriteStream(path.join(__dirname, 'public/attachments/' + attachment.generatedFileName));
+          attachment.stream.pipe(output);
+        });
+      }
+      if (mail_object.html === undefined) {
+        data_array[i]['text'] = mail_object.text;
+      }
+      else
+        data_array[i]['text'] = mail_object.html;
+    });
+    //mailparser.write(data_array[i]['text']);
+    //mailparser.end();
+  }
+  /*---------------------------- end mailparser -------------------------------*/
   Inbox.prototype.getInbox = function(tdxToken,cb){
     var self = this;
-    log(self._config.byodimapboxes_ID);
-    log('authenticate');
+    var errors = null;
     self._tdxAPI.query("datasets/" + self._config.byodimapboxes_ID + "/data", null, null, null, tdxToken,function (qerr, data) {
       if (qerr){
         cb(qerr,null);
       }
       if(data != null){
         var data_array = data.data;
-        for(let i=0;i<data_array.length;i++){
-          var mailparser = new MailParser({streamAttachments:true});
-          mailparser.on("end", function(mail_object){
-            if(mail_object.attachments != undefined) {
-              mail_object.attachments.forEach(function (attachment) {
-                log('attachments', attachment.fileName);
-                var output = fs.createWriteStream(path.join(__dirname,'public/attachments/'+attachment.generatedFileName));
-                attachment.stream.pipe(output);
-              });
+        var saved_array = [];
+        for(var i=0; i< data_array.length;i++){
+          var savedObj = {};
+          if (data_array[i]['flags'].indexOf("\\Deleted") !== -1) {
+              data_array[i]['folder'] = 4;
             }
-            if(mail_object.html === undefined){
-              data_array[i]['text'] = mail_object.text;
-            }
-            else
-              data_array[i]['text'] = mail_object.html;
-            if(data_array[i]['flags'].indexOf("\\Deleted") !== -1){
-              data_array[i]['folder'] =4;
-            }
-            else if(data_array[i]['flags'].indexOf("\\Inbox") !== -1 && data_array[i]['flags'].indexOf("\\deleted") === -1) {
+            else if (data_array[i]['flags'].indexOf("\\Inbox") !== -1 && data_array[i]['flags'].indexOf("\\deleted") === -1) {
               data_array[i]['folder'] = 1;
             }
-            else if(data_array[i]['flags'].indexOf("\\Sent") !== -1){
+            else if (data_array[i]['flags'].indexOf("\\Sent") !== -1) {
               data_array[i]['folder'] = 2;
             }
-            else if(data_array[i]['flags'].indexOf("\\Draft") !== -1){
+            else if (data_array[i]['flags'].indexOf("\\Draft") !== -1) {
               data_array[i]['folder'] = 3;
             }
-            if(data_array[i]['flags'].indexOf("\\Seen") === -1) {
+            if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
               data_array[i]['from'] = '<b>' + data_array[i]['from'] + '<b>';
               data_array[i]['date'] = '<b>' + data_array[i]['date'] + '<b>';
               data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '<b>';
             }
-          });
-          //var emailstring = fs.readFileSync(emlPath);
-          mailparser.write(data_array[i]['text']);
-          mailparser.end();
-          //fs.createReadStream(emlPath).pipe(mailparser);
+          fs.writeFile(path.join(_workingDir,data_array[i]['uid']+'.log'),JSON.stringify(data_array[i],null,4),{encoding:"utf8",flag:"w"},function(save_err){
+            if(save_err) {
+              log(save_err);
+              errors = save_err;
+            }
+          })
+          savedObj = _.pick(data_array[i],["uid","to","from","subject","date"]);
+          saved_array.push(savedObj);
         }
-        cb(null,data_array);
-		fs.writeFile(path.join(_workingDir,'inbox.json'),JSON.stringify(data_array,null,4),{encoding:"utf8",flag:"w"},function(err){
-          if(err)
+
+		fs.writeFile(path.join(_workingDir,'inbox.json'),JSON.stringify(saved_array,null,4),{encoding:"utf8",flag:"w"},function(err){
+          if(err) {
             log(err);
+            errors = err;
+          }
           else
             log('save done');
         })
       }
+      if(errors == null)
+        cb(null,data_array)
+      else
+        cb(errors,null);
     });
   }
   /*--------------------------- update function ---------------------------*/

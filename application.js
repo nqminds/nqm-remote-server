@@ -165,24 +165,10 @@ module.exports = (function() {
             res.redirect("/login");
           }
           else{
-            _email.getAttachmentsList(_tdxAccessToken,function(err,attachments){
-              if(err)
-                log(err);
-              else {
-                log(attachments['data']);
-                _cache.getAttachments(_tdxAccessToken, attachments["data"], function (error,docNames) {
-                  if (error)
-                    log(error);
-                  else {
-                    log('get docnames');
-                    log(docNames);
-                    log(attachments["data"]);
-                    log('raw emails are');
-                    //log(ans);
-                    res.render("email", {messages: ans,attachments:attachments["data"],docNames:docNames});
-                  }
-                })
-              }
+            _cache.getAttachments(_tdxAccessToken, function (docNames) {
+                log('get docnames');
+                log(docNames);
+                res.render("email", {messages: ans,docNames:docNames});
             })
           }
         })
@@ -247,8 +233,15 @@ module.exports = (function() {
       //});
 
     })
-    /******************************************************************************************s**/
+    /*********************************************************************************************/
+    app.post(/message/,function(req,res,next){
+      log('view message id is: '+req.query.id);
+      var mailUid = req.query.id;
+      _email.getOneMail(mailUid,function(err,mailContent){
 
+      })
+    })
+    /*********************************************************************************************/
     app.put(/message/,function(req,res,next){
       log('msg is '+req.body.message);
       var updatemsg = req.body.message;

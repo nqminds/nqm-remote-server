@@ -4,7 +4,6 @@
 //
 
 console.log(gData);
-console.log(gAttachments);
 console.log(gdocNames);
 
 //lodash underscore
@@ -428,33 +427,15 @@ webix.ready(function() {
     $$("id_delete").show();
     console.log(obj);
     var this_content = findContent(obj.id);
-    var this_attachment;
+    webix.ajax().post("/message?id="+this_content['uid'],function(text,data,XmlHttpRequest){
+      
+    })
 
-    var contentHtml = '';
-    if(this_content != null) {
+    var contentHtml = "";
+    if(this_content != "") {
       contentHtml += this_content['text'];
-      this_attachment = findAttachment(this_content['uid']);
-    }
-    if(this_attachment.length>0){
-      var spaces = "<br/><br/><br/>";
-      var icon = "";
-      for(var i=0;i<this_attachment.length;i++) {
-        icon += "<div name="+this_attachment[i]['attachmentId']+"."+this_attachment[i]['type']+">";
-        if(this_attachment[i]['type'] === 'pdf') {
-         icon += "<span class='webix_icon attachment-icon fa-file-pdf-o fa-4x'>";
-        }
-        else if(this_attachment[i]['type'] === 'zip'){
-          icon += "<span class='webix_icon attachment-icon fa-file-archive-o fa-4x'>"
-        }
-        else{
-          icon += "<span class='webix_icon attachment-icon fa-file-image-o fa-4x'>";
-        }
-        icon += this_attachment[i]['name']+"."+this_attachment[i]['type']+"</span></div><br/>";
-      }
-      contentHtml += spaces+icon;
     }
     $$("mailview").setHTML(contentHtml);
-    setupDocLoad();
   });
 
 
