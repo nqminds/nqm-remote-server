@@ -166,10 +166,11 @@ module.exports = (function() {
               res.redirect("/");
           }
           else{
-            _cache.getAttachments(_emailAccessToken, function (docNames) {
-                log('get docnames');
-                log(docNames);
-                res.render("email", {messages: ans,docNames:docNames});
+            _cache.getAttachments(_emailAccessToken, function (error,docNames) {
+              if(error){
+                docNames = [];
+              }
+              res.render("email", {messages: ans,docNames:docNames});
             })
           }
         })

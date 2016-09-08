@@ -63,48 +63,53 @@ module.exports = (function() {
         var data_array = data.data;
         var saved_array = [];
         var savedObj = {};
+        if(data_array !== undefined && data_array.length>0) {
 
-        for (var i = 0; i < data_array.length; i++) {
-          if (data_array[i]['flags'].indexOf("\\Deleted") !== -1) {
-            data_array[i]['folder'] = 4;
-          }
-          else if (data_array[i]['flags'].indexOf("\\Inbox") !== -1 && data_array[i]['flags'].indexOf("\\deleted") === -1) {
-            data_array[i]['folder'] = 1;
-          }
-          else if (data_array[i]['flags'].indexOf("\\Sent") !== -1) {
-            data_array[i]['folder'] = 2;
-          }
-          else if (data_array[i]['flags'].indexOf("\\Draft") !== -1) {
-            data_array[i]['folder'] = 3;
-          }
-          if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
-            data_array[i]['from'] = '<b>' + data_array[i]['from'] + '<b>';
-            data_array[i]['date'] = '<b>' + data_array[i]['date'] + '<b>';
-            data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '<b>';
-          }
-          savedObj = _.pick(data_array[i], ["uid", "to", "from", "subject", "date", "flags","folder"]);
-          saved_array.push(savedObj);
-
-          fs.writeFile(path.join(_workingDir, data_array[i]['uid'] + '.json'), JSON.stringify(data_array[i], null, 4), {
-            encoding: "utf8",
-            flag: "w"
-          }, function (save_err) {
-            if (save_err) {
-              log(save_err);
-              errors = save_err;
+          for (var i = 0; i < data_array.length; i++) {
+            if (data_array[i]['flags'].indexOf("\\Deleted") !== -1) {
+              data_array[i]['folder'] = 4;
             }
-          })
-
-          fs.writeFile(path.join(_workingDir, 'inbox.json'), JSON.stringify(savedObj)+"\r\n", {
-            encoding: "utf8",
-            flag: "a+"
-          }, function (save_err) {
-            if (save_err) {
-              log(save_err);
-              errors = save_err;
+            else if (data_array[i]['flags'].indexOf("\\Inbox") !== -1 && data_array[i]['flags'].indexOf("\\deleted") === -1) {
+              data_array[i]['folder'] = 1;
             }
-          })
+            else if (data_array[i]['flags'].indexOf("\\Sent") !== -1) {
+              data_array[i]['folder'] = 2;
+            }
+            else if (data_array[i]['flags'].indexOf("\\Draft") !== -1) {
+              data_array[i]['folder'] = 3;
+            }
+            if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
+              data_array[i]['from'] = '<b>' + data_array[i]['from'] + '<b>';
+              data_array[i]['date'] = '<b>' + data_array[i]['date'] + '<b>';
+              data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '<b>';
+            }
+            savedObj = _.pick(data_array[i], ["uid", "to", "from", "subject", "date", "flags", "folder"]);
+            saved_array.push(savedObj);
 
+            fs.writeFile(path.join(_workingDir, data_array[i]['uid'] + '.json'), JSON.stringify(data_array[i], null, 4), {
+              encoding: "utf8",
+              flag: "w"
+            }, function (save_err) {
+              if (save_err) {
+                log(save_err);
+                errors = save_err;
+              }
+            })
+
+            fs.writeFile(path.join(_workingDir, 'inbox.json'), JSON.stringify(savedObj) + "\r\n", {
+              encoding: "utf8",
+              flag: "a+"
+            }, function (save_err) {
+              if (save_err) {
+                log(save_err);
+                errors = save_err;
+              }
+            })
+
+          }
+        }
+        else{
+          errors = "data_array not found";
         }
         if(errors == null)
           cb(null,data_array);

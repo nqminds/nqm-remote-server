@@ -114,6 +114,7 @@ function getDocs(){
       ans.data = JSON.parse(fileContent);
     }
   }catch(e){
+    ans.error = e;
   }
   //console.log(ans);
   return ans;
@@ -121,20 +122,26 @@ function getDocs(){
 exports.getAttachments = function(token,cb){
   createFolder(attachmentPath);
   var docs = getDocs();
-  var docNames = [];
-  if(docs.data != null){
-    _.forEach(docs.data,function(element){
-      var docName = element['name'];
-      docName += '.'+element['schemaDefinition']['parent'];
-      var docId = element['store']
-      var docNameObj = {
-        docName:docName,
-        docId:docId
-      }
-      docNames.push(docNameObj);
-    })
+  if(docs.error == null){
+    console.log('get IVAN doc error');
+    cb(docs.error,null);
   }
-  cb(docNames);
+  else {
+    var docNames = [];
+    if (docs.data != null) {
+      _.forEach(docs.data, function (element) {
+        var docName = element['name'];
+        docName += '.' + element['schemaDefinition']['parent'];
+        var docId = element['store']
+        var docNameObj = {
+          docName: docName,
+          docId: docId
+        }
+        docNames.push(docNameObj);
+      })
+    }
+    cb(null,docNames);
+  }
 }
 
 exports.getFiles = function(cb, token) {
