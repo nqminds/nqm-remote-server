@@ -32,7 +32,7 @@ module.exports = (function() {
   var _sync = null;
   var _workingDir = null;
   var timerEnabled = false;
-  var authState = null;
+  var authState = true;
 
 /*
   fs.stat('./'+tokenPath,function(err,stats){
@@ -83,14 +83,12 @@ module.exports = (function() {
 
 	try{
 		emailconfig = require(path.join(_workingDir,config.userInboxConfigName));
+		authState = false;
+		_fileCache = new _filedriver(emailconfig);
+		_tdxAPI =  (new (require("nqm-api-tdx"))(emailconfig));
+		_email =new _emaildriver(emailconfig, _workingDir);
 	} catch(err) {
-		if (err) authState = true;
-		else {
-			authState = false;
-			_fileCache = new _filedriver(emailconfig);
-			_tdxAPI =  (new (require("nqm-api-tdx"))(emailconfig));
-			_email =new _emaildriver(emailconfig, _workingDir);
-		}
+		authState = true;
 	}
  
     app.set("views", __dirname + "/views");
@@ -100,6 +98,7 @@ module.exports = (function() {
 
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
+
 
   	function authPollTimer() {
 		log("Retry email auth token.")
@@ -126,7 +125,7 @@ module.exports = (function() {
 
 				_emailAccessToken = accessToken;
       			_sync = new syncdriver(emailconfig,_emailAccessToken);
-        		res.render("auth", { config: config });
+        		res.render("apps", { config: config });
 			});
 		} else if (timerEnabled && _emailAccessToken==null && !authState)
 				res.render("apps", { config: config });
@@ -137,6 +136,38 @@ module.exports = (function() {
 			res.render("auth");
 		}
     });
+
+	app.get('/auth', function (req, res) {
+		if(authState && req.query.userID!==undefined) {
+			var tAPI =  (new (require("nqm-api-tdx"))(config));
+			tAPI.authenticate(config.authtable_token, config.authtable_Pass, function(taberr, tabAccessToken){
+				if(taberr) res.render("auth");
+				else {
+					tAPI.query("datasets/" + config.authtable_ID + "/data", req.query, null, null, function (qerr, data) {
+						if (qerr) res.render("auth");
+						else {
+							if (!data.data.length) res.render("auth");
+							else {
+								fs.writeFile(path.join(_workingDir,config.userInboxConfigName), JSON.stringify(data.data[0]), function(ferr){
+									if (ferr) {
+										log(ferr);
+										res.render("auth");
+									} else {
+										emailconfig = data.data[0];
+										authState = false;
+            							_fileCache = new _filedriver(emailconfig);
+            							_tdxAPI =  (new (require("nqm-api-tdx"))(emailconfig));
+            							_email = new _emaildriver(emailconfig, _workingDir);
+										res.redirect("/");
+									}
+								});
+							}
+						}
+					});
+				}
+			});
+		} else res.redirect("/");
+	});
 
 /*
     app.get("/oauthCB", function(request, response) {
@@ -161,9 +192,11 @@ module.exports = (function() {
 */
 
     /*---------------- get files -----------------------------*/
-    app.get("/files", function(request, response) {
+    app.get("/files", function(req, res) {
 		if (!authState)
         	_cache.getFiles(response, _tdxAccessToken);
+		else
+			res.render("auth");
     });
 
     /*
@@ -188,7 +221,7 @@ module.exports = (function() {
             		})
           		}
         	})
-		}
+		} else res.render("auth");
     });
 
     /*
