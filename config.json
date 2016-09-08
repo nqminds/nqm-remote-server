@@ -12,5 +12,7 @@
   "appsPath": "./apps",
   "appDownloadPath": "./appDownload",
   "nodePath": "",
-  "authServerURL": "https://tdx.nqminds.com/auth"
+  "authServerURL": "https://tdx.nqminds.com/auth",
+  "userHomeDirName":".SECD",
+  "userInboxConfigName":"config_inbox.json"
 }

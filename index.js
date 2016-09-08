@@ -5,6 +5,6 @@
 var log = require("debug")("index");
 var _config = require("./config.json");
 var Application = require("./application");
-var _env ={name:'SECD', homedir:process.env['HOME']};
+var _env ={appname:'SECD', homepath:process.env['HOME']};
 Application.start(_env, _config);
 

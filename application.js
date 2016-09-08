@@ -18,20 +18,23 @@ module.exports = (function() {
   var _emailAccessToken = null;
   var _subscriptionManager = require("./subscription-manager");
   var _cache = require("./cache.js");
+  var path = require('path');
 
   var bodyParser = require('body-parser');
   var _emaildriver = require("./email.js")
-  var emailconfig = require("./config.inbox.json");
+  var emailconfig = null;
   var _email = null;
   var _filedriver = require('./fileCache');
-  var _fileCache = new _filedriver(emailconfig);
-  var _tdxAPI =  (new (require("nqm-api-tdx"))(emailconfig));
+  var _fileCache = null;
+  var _tdxAPI =  null;
   var syncdriver = require('./sync');
   var fs = require('fs');
   var _sync = null;
   var _workingDir = null;
   var timerEnabled = false;
+  var authState = null;
 
+/*
   fs.stat('./'+tokenPath,function(err,stats){
     if(!err) {
       var TokenObj = require('./'+tokenPath);
@@ -45,7 +48,7 @@ module.exports = (function() {
       }
     }
   })
-
+*/
 
   var tdxConnectionHandler = function(err, reconnect) {
     if (!err) {
@@ -63,8 +66,7 @@ module.exports = (function() {
 
     var app = express();
 
-	_workingDir = _env.homedir+"/."+_env.name;
-	_email =new _emaildriver(emailconfig, _workingDir);
+	_workingDir = path.join(_env.homepath,config.userHomeDirName);
 
 	try{
 		fs.statSync(_workingDir);
@@ -76,6 +78,18 @@ module.exports = (function() {
 			fs.mkdirSync(_workingDir);
 		} catch(err) {
 			throw err;
+		}
+	}
+
+	try{
+		emailconfig = require(path.join(_workingDir,config.userInboxConfigName));
+	} catch(err) {
+		if (err) authState = true;
+		else {
+			authState = false;
+			_fileCache = new _filedriver(emailconfig);
+			_tdxAPI =  (new (require("nqm-api-tdx"))(emailconfig));
+			_email =new _emaildriver(emailconfig, _workingDir);
 		}
 	}
  
@@ -102,7 +116,7 @@ module.exports = (function() {
   	}
 
     app.get('/', function (req, res) {
-		if (!timerEnabled && _emailAccessToken==null) {
+		if (!timerEnabled && _emailAccessToken==null && !authState) {
 			_tdxAPI.authenticate(emailconfig.emailtable_token, emailconfig.emailtable_Pass, function(imaperr, accessToken){
 				if (imaperr) {
 					log(imaperr);
@@ -114,14 +128,17 @@ module.exports = (function() {
       			_sync = new syncdriver(emailconfig,_emailAccessToken);
         		res.render("apps", { config: config });
 			});
-		} else if (timerEnabled && _emailAccessToken==null)
+		} else if (timerEnabled && _emailAccessToken==null && !authState)
 				res.render("apps", { config: config });
-		else if (_emailAccessToken!=null) {
+		else if (_emailAccessToken!=null && !authState) {
 				_sync = new syncdriver(emailconfig,_emailAccessToken);
                 res.render("apps", { config: config });
+		} else if (authState) {
+			res.render("auth");
 		}
     });
 
+/*
     app.get("/oauthCB", function(request, response) {
       var up = url.parse(request.url);
       var q = querystring.parse(up.query);
@@ -130,10 +147,7 @@ module.exports = (function() {
         _subscriptionManager.setAccessToken(q.access_token);
         response.writeHead(301, {Location: config.hostURL});
 
-        /*assign _sync value with tdxAccessToken*/
         _sync = new syncdriver(emailconfig,_emailAccessToken);
-        /*-------------------------------------------------*/
-        /*--------------- save token json -----------------*/
         var tdxTokenObj = {
           token:_emailAccessToken,
           timestamp:Date.now()
@@ -142,38 +156,39 @@ module.exports = (function() {
           if(!err)
             response.end();
         })
-        /*-------------------------------------------------*/
       }
     });
+*/
 
     /*---------------- get files -----------------------------*/
     app.get("/files", function(request, response) {
-        _cache.getFiles(response, _tdxAccessToken);
+		if (!authState)
+        	_cache.getFiles(response, _tdxAccessToken);
     });
 
     /*
     * get email
     */
     app.get('/email', function (req, res,next) {
-        _fileCache.setSyncHandler(_sync);
-      log('get /email token: '+_emailAccessToken);
-        _email.getInbox(_tdxAPI, function(err,ans){
-          if(err) {
-            log(err);
-            if(err == "NULL DATA")
-              res.render("email",{messages:[],docNames:[]});
-            else
-              res.redirect("/");
-          }
-          else{
-            _cache.getAttachments(_emailAccessToken, function (error,docNames) {
-              if(error){
-                docNames = [];
-              }
-              res.render("email", {messages: ans,docNames:docNames});
-            })
-          }
-        })
+        if (!authState) {
+			_fileCache.setSyncHandler(_sync);
+    		log('get /email token: '+_emailAccessToken);
+        	_email.getInbox(_tdxAPI, function(err,ans){
+          		if(err) {
+            		log(err);
+            		if(err == "NULL DATA")
+              			res.render("email",{messages:[],docNames:[]});
+            		else
+              			res.redirect("/");
+          		} else{
+            		_cache.getAttachments(_emailAccessToken, function (error,docNames) {
+              			if(error)
+                			docNames = [];
+              			res.render("email", {messages: ans,docNames:docNames});
+            		})
+          		}
+        	})
+		}
     });
 
     /*
