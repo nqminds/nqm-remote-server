@@ -429,8 +429,8 @@ webix.ready(function() {
     var this_content = findContent(obj.id);
 
     webix.ajax().post("/message?id="+this_content['uid'],function(text,data,XmlHttpRequest){
-      if(xmlHttpRequest.readyState == 4 && xmlHttpRequest.status == 200) {
-        console.log(text);
+      if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200) {
+        //console.log(text);
         var contentHtml = "";
         if (text != "") {
           contentHtml += text;
@@ -439,8 +439,6 @@ webix.ready(function() {
       }
     })
   });
-
-
   $$("$tree1").select(1);
 
   /*

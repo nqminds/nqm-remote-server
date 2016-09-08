@@ -51,62 +51,12 @@ module.exports = (function() {
       console.log("createFolder: ",e);
     }
   }
-  /*-------------------------- upsert function -----------------------*/
-  function upsertDataBulk(commandHost, accessToken, datasetId, data, cb) {
-    var url = util.format("%s/commandSync/dataset/data/upsertMany", commandHost);
-    var bulk = {};
-    bulk.datasetId = datasetId;
-    bulk.payload = [].concat(data);
-    log(data);
-    log("sending upsertMany [%d - %d bytes]",data.length, JSON.stringify(data).length);
-    request({ url: url, timeout: 3600000, method: "post", headers: { authorization: "Bearer " + accessToken }, json: true, body: bulk }, function(err, response, content) {
-      if (!handleError(err, response, log, cb)) {
-        log("result from server: %j", response.body);
-        cb(null);
-      }
-    });
-  }
-  /*---------------------------end upsert function ---------------------------*/
-
-  /*--------------------------- get One Mail mailparsered---------------------*/
-  Inbox.prototype.getOneMail = function(mailUid,cb) {
-    log('read filename is:'+mailUid);
-    var mailObj = JSON.parse(fs.readFileSync(path.join(_workingDir,mailUid+'.json')));
-    //log('read file result is:');
-    //log(mailObj);
-
-    var mailparser = new MailParser({streamAttachments: true});
-    mailparser.on("end", function (mail_object) {
-      createFolder('attachments');
-      log(mail_object.html);
-      if (mail_object.attachments != undefined) {
-        mail_object.attachments.forEach(function (attachment) {
-          log('attachments', attachment.fileName);
-          var output = fs.createWriteStream(path.join(__dirname, 'public/attachments/' + attachment.generatedFileName));
-          attachment.stream.pipe(output);
-        });
-      }
-      if (mail_object.html === undefined) {
-        mailObj['text'] = mail_object.text;
-      }
-      else {
-        mailObj['text'] = mail_object.html;
-      }
-      //log(mailObj['text']);
-      cb(mailObj['text']);
-    });
-    mailparser.write(mailObj['text']);
-    mailparser.end();
-  }
-  /*---------------------------- end mailparser -------------------------------*/
-  Inbox.prototype.getInbox = function(tdxAPI,cb) {
-    var self = this;
-    var errors = null;
-    log(self._config.byod)
-    tdxAPI.query("datasets/" + self._config.emailtable_ID + "/data", null, null, null, function (qerr, data) {
+  function getTBXtable(tdxAPI,cb){
+    var errors;
+    tdxAPI.query("datasets/" + this._config.emailtable_ID + "/data", null, null, null, function (qerr, data) {
       if (qerr) {
         log('cannot get the data');
-        cb(qerr, null);
+        cb("NULL DATA", null);
       }
       if (data != null) {
 
@@ -145,7 +95,7 @@ module.exports = (function() {
             }
           })
 
-          fs.writeFile(path.join(_workingDir, 'inbox.json'), JSON.stringify(savedObj, null, 4), {
+          fs.writeFile(path.join(_workingDir, 'inbox.json'), JSON.stringify(savedObj)+"\r\n", {
             encoding: "utf8",
             flag: "a+"
           }, function (save_err) {
@@ -154,6 +104,7 @@ module.exports = (function() {
               errors = save_err;
             }
           })
+
         }
         if(errors == null)
           cb(null,data_array);
@@ -161,6 +112,80 @@ module.exports = (function() {
           cb('errors',null);
       }
     })
+  }
+  /*-------------------------- upsert function -----------------------*/
+  function upsertDataBulk(commandHost, accessToken, datasetId, data, cb) {
+    var url = util.format("%s/commandSync/dataset/data/upsertMany", commandHost);
+    var bulk = {};
+    bulk.datasetId = datasetId;
+    bulk.payload = [].concat(data);
+    log(data);
+    log("sending upsertMany [%d - %d bytes]",data.length, JSON.stringify(data).length);
+    request({ url: url, timeout: 3600000, method: "post", headers: { authorization: "Bearer " + accessToken }, json: true, body: bulk }, function(err, response, content) {
+      if (!handleError(err, response, log, cb)) {
+        log("result from server: %j", response.body);
+        cb(null);
+      }
+    });
+  }
+  /*---------------------------end upsert function ---------------------------*/
+
+  /*--------------------------- get One Mail mailparsered---------------------*/
+  Inbox.prototype.getOneMail = function(mailUid,cb) {
+    log('read filename is:'+mailUid);
+    var mailObj = JSON.parse(fs.readFileSync(path.join(_workingDir,mailUid+'.json')));
+    //log('read file result is:');
+    //log(mailObj);
+
+    var mailparser = new MailParser({streamAttachments: true});
+    mailparser.on("end", function (mail_object) {
+      createFolder('attachments');
+      if (mail_object.attachments != undefined) {
+        mail_object.attachments.forEach(function (attachment) {
+          log('attachments', attachment.fileName);
+          var output = fs.createWriteStream(path.join(__dirname, 'public/attachments/' + attachment.generatedFileName));
+          attachment.stream.pipe(output);
+        });
+      }
+      if (mail_object.html === undefined) {
+        mailObj['text'] = mail_object.text;
+      }
+      else {
+        mailObj['text'] = mail_object.html;
+      }
+      //log(mailObj['text']);
+      cb(mailObj['text']);
+    });
+    mailparser.write(mailObj['text']);
+    mailparser.end();
+  }
+  /*---------------------------- end mailparser -------------------------------*/
+  Inbox.prototype.getInbox = function(tdxAPI,cb) {
+    var self = this;
+    fs.stat(path.join(_workingDir,"inbox.json"),function(err,stat){
+      if(err){
+        getTBXtable.call(self,tdxAPI,cb);
+      }
+    else{
+        var oldMessages = fs.readFileSync(path.join(_workingDir,"inbox.json")).toString();
+        var ansMessages_array = [];
+        log('read from inbox.json is:');
+        var oldMessages_array = oldMessages.split("\r\n");
+        log('last one is:');
+        log(oldMessages_array[oldMessages_array.length-1]);
+        if(oldMessages_array.length>0) {
+          for (var i = 0; i < oldMessages_array.length-1; i++) {
+            var oldMessageObj = null;
+            oldMessageObj = JSON.parse(oldMessages_array[i]);
+            ansMessages_array.push(oldMessageObj);
+          }
+          cb(null,ansMessages_array);
+        }
+        else
+          cb('error',null);
+      }
+    })
+
   }
   /*--------------------------- update function ---------------------------*/
   Inbox.prototype.update = function(msg,fileCache,cb){

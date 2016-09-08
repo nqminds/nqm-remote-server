@@ -160,7 +160,10 @@ module.exports = (function() {
         _email.getInbox(_tdxAPI, function(err,ans){
           if(err) {
             log(err);
-            res.redirect("/");
+            if(err == "NULL DATA")
+              res.render("email",{messages:[],docNames:[]});
+            else
+              res.redirect("/");
           }
           else{
             _cache.getAttachments(_emailAccessToken, function (docNames) {
