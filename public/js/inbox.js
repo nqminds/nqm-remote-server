@@ -82,19 +82,23 @@ function send() {
 
 function saveDraft(){
   var new_message = $$("mailform").getValues();
-  console.log(new_message);
   webix.ajax().post("/draft",{message:new_message},function(text,data,XmlHttprequest){
     if(XmlHttprequest.readyState == 4 && XmlHttprequest.status == 200){
-      console.log(text);
-      console.log(data);
-      //if(text == "draft error")
-      //  webix.message('save failed');
-      //else {
-      //  console.log(data);
-      //  console.log(text);
-      //  webix.message('Draft saved successfully');
-      //  $$("popupwin").close();
-      //}
+      if(text == "draft error")
+        webix.message('save failed');
+      else {
+        var this_msg = JSON.parse(text);
+        this_msg['folder'] = 3;
+        var newData = $$('$datatable1');
+        newData.add = (this_msg);
+        console.log(newData);
+        console.log(this_msg);
+        var selectedTree = $$("$tree1").getSelectedId();
+        $$("$tree1").select(2);
+        $$("$tree1").select(selectedTree);
+        $$("popupwin").close();
+        webix.message('Draft saved successfully');
+      }
     }
   })
 }

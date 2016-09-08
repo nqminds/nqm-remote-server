@@ -1,3 +1,4 @@
+
 var contentUI = {
   type: "space",
   rows: [
@@ -7,12 +8,12 @@ var contentUI = {
         {},
         {
           view:"form",
+		  id: "idform",
           elements:[
-            { view:"text", label:"Email" },
-            { view:"text", type:"password", label:"Password" },
+            { id:"idfield", view:"text", label:"ID" },
             {cols:[
-              { view:"button", value:"Login", type:"form" },
-              { view:"button", value:"Cancel" }
+              { view:"button", value:"Activate", type:"form", click: onActivateClick },
+              { view:"button", value:"Cancel", click: onCancelClick }
             ]}
           ]
         },
@@ -22,3 +23,11 @@ var contentUI = {
     {},
   ]
 };
+
+function onActivateClick(){
+  webix.send('/auth',{"userID":$$("idfield").getValue()},"GET");
+}
+
+function onCancelClick(){
+}
+
