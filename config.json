@@ -6,11 +6,9 @@
   "autoReconnectTimer": 5000,
   "hostURL": "http://localhost:8125",
   "heartbeatInterval": 10000,
-
   "actionsDatasetId": "ByeUj8pmw",
   "appsInstalledDatasetId": "Sygn6vamP",
   "configurationDatasetId": "H1xuke1Bw",
-  
   "appsPath": "./apps",
   "appDownloadPath": "./appDownload",
   "nodePath": "",

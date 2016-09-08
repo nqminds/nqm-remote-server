@@ -30,6 +30,7 @@ module.exports = (function() {
   var fs = require('fs');
   var _sync = null;
   var _workingDir = null;
+  var timerEnabled = false;
 
   fs.stat('./'+tokenPath,function(err,stats){
     if(!err) {
@@ -56,7 +57,8 @@ module.exports = (function() {
       log("tdx connection failed: %s",err.message);
     }
   };
-  
+ 
+
   var _start = function(_env, config) {  
 
     var app = express();
@@ -85,30 +87,41 @@ module.exports = (function() {
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({ extended: false }));
 
+  	function authPollTimer() {
+		log("Retry email auth token.")
+		_tdxAPI.authenticate(emailconfig.emailtable_token, emailconfig.emailtable_Pass, function(imaperr, accessToken){
+			if (imaperr) {
+				setTimeout(authPollTimer,config.autoReconnectTimer);
+			} else {
+				log('Email auth token:'+accessToken);
+
+				timerEnabled = false;
+				_emailAccessToken = accessToken;				
+			}
+		});
+  	}
 
     app.get('/', function (req, res) {
-		_tdxAPI.authenticate(emailconfig.emailtable_token, emailconfig.emailtable_Pass, function(imaperr, accessToken){
-			if (imaperr) log(imaperr);
+		if (!timerEnabled && _emailAccessToken==null) {
+			_tdxAPI.authenticate(emailconfig.emailtable_token, emailconfig.emailtable_Pass, function(imaperr, accessToken){
+				if (imaperr) {
+					log(imaperr);
+					timerEnabled = true;
+					setTimeout(authPollTimer,config.autoReconnectTimer);
+				}
 
-			log("Email access token:"+accessToken);
-
-			_emailAccessToken = accessToken;
-      _sync = new syncdriver(emailconfig,_emailAccessToken);
-        	res.render("apps", { config: config });
-		});
+				_emailAccessToken = accessToken;
+      			_sync = new syncdriver(emailconfig,_emailAccessToken);
+        		res.render("apps", { config: config });
+			});
+		} else if (timerEnabled && _emailAccessToken==null)
+				res.render("apps", { config: config });
+		else if (_emailAccessToken!=null) {
+				_sync = new syncdriver(emailconfig,_emailAccessToken);
+                res.render("apps", { config: config });
+		}
     });
 
-/*    
-    app.get("/login", function(req, res) {
-      res.render("login",{ inboxconfig: emailconfig});
-    });
-  
-    app.get("/auth", function(request, response) {
-      var oauthURL = util.format("%s/?rurl=%s/oauthCB", config.authServerURL, config.hostURL);
-      response.writeHead(301, {Location: oauthURL});
-      response.end();
-    });
-*/    
     app.get("/oauthCB", function(request, response) {
       var up = url.parse(request.url);
       var q = querystring.parse(up.query);
