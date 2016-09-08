@@ -126,7 +126,7 @@ module.exports = (function() {
 
 				_emailAccessToken = accessToken;
       			_sync = new syncdriver(emailconfig,_emailAccessToken);
-        		res.render("apps", { config: config });
+        		res.render("auth", { config: config });
 			});
 		} else if (timerEnabled && _emailAccessToken==null && !authState)
 				res.render("apps", { config: config });
@@ -256,7 +256,7 @@ module.exports = (function() {
       var mailUid = req.query.id;
       _email.getOneMail(mailUid,function(mailContent){
         log('callback result is:');
-        log(mailContent);
+        //log(mailContent);
         //log(JSON.parse(mailContent));
         res.send(mailContent);
       })

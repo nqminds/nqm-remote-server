@@ -411,6 +411,9 @@ function setupDocLoad() {
     x[i].setAttribute("onclick", "loadDocument(this.parentElement.getAttribute(\'name\'))");
   }
 }
+function replaceBold(boldStr){
+  return boldStr.replace(/<b>/gi, "")
+}
 /*--------------------- END attachment popup ------------------------------------------------*/
 webix.ready(function() {
 
@@ -421,13 +424,23 @@ webix.ready(function() {
   $$("$datatable1").bind($$("$tree1"),function(obj,filter){
     return obj.folder == filter.id;
   });
+  $$("$tree1").select(1);
 
   $$("$datatable1").attachEvent("onAfterSelect",function(obj){
     $$("id_reply").show();
     $$("id_delete").show();
     console.log(obj);
     var this_content = findContent(obj.id);
-
+    if (this_content['flags'].indexOf("\\Seen") === -1) {
+      console.log('unseen to seen');
+      this_content['from'] = replaceBold(this_content['from']);
+      this_content['subject'] = replaceBold(this_content['subject']);
+      this_content['date'] = replaceBold(this_content['date']);
+      var newData = $$('$datatable1');
+      var sel = newData.getSelectedId(true);
+      console.log(this_content);
+      newData.updateItem = (sel , this_content);
+    }
     webix.ajax().post("/message?id="+this_content['uid'],function(text,data,XmlHttpRequest){
       if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200) {
         //console.log(text);
@@ -438,8 +451,8 @@ webix.ready(function() {
         $$("mailview").setHTML(contentHtml);
       }
     })
+
   });
-  $$("$tree1").select(1);
 
   /*
    * create email

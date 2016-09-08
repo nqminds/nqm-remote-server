@@ -78,11 +78,6 @@ module.exports = (function() {
             else if (data_array[i]['flags'].indexOf("\\Draft") !== -1) {
               data_array[i]['folder'] = 3;
             }
-            if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
-              data_array[i]['from'] = '<b>' + data_array[i]['from'] + '<b>';
-              data_array[i]['date'] = '<b>' + data_array[i]['date'] + '<b>';
-              data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '<b>';
-            }
             savedObj = _.pick(data_array[i], ["uid", "to", "from", "subject", "date", "flags", "folder"]);
             saved_array.push(savedObj);
 
@@ -106,6 +101,11 @@ module.exports = (function() {
               }
             })
 
+            if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
+              data_array[i]['from'] = '<b>' + data_array[i]['from'] + '<b>';
+              data_array[i]['date'] = '<b>' + data_array[i]['date'] + '<b>';
+              data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '<b>';
+            }
           }
         }
         else{
@@ -182,6 +182,11 @@ module.exports = (function() {
           for (var i = 0; i < oldMessages_array.length-1; i++) {
             var oldMessageObj = null;
             oldMessageObj = JSON.parse(oldMessages_array[i]);
+            if (oldMessageObj['flags'].indexOf("\\Seen") === -1) {
+              oldMessageObj['from'] = '<b>' + oldMessageObj['from'] + '<b>';
+              oldMessageObj['date'] = '<b>' + oldMessageObj['date'] + '<b>';
+              oldMessageObj['subject'] = '<b>' + oldMessageObj['subject'] + '<b>';
+            }
             ansMessages_array.push(oldMessageObj);
           }
           cb(null,ansMessages_array);
