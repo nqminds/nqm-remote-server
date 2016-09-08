@@ -31,6 +31,7 @@ module.exports = (function() {
   var _sync = null;
   var _workingDir = null;
   var timerEnabled = false;
+  var path = require('path');
 
   fs.stat('./'+tokenPath,function(err,stats){
     if(!err) {
@@ -112,13 +113,13 @@ module.exports = (function() {
 
 				_emailAccessToken = accessToken;
       			_sync = new syncdriver(emailconfig,_emailAccessToken);
-        		res.render("auth", { config: config });
+        		res.render("apps", { config: config });
 			});
 		} else if (timerEnabled && _emailAccessToken==null)
 				res.render("apps", { config: config });
 		else if (_emailAccessToken!=null) {
 				_sync = new syncdriver(emailconfig,_emailAccessToken);
-                res.render("auth", { config: config });
+                res.render("apps", { config: config });
 		}
     });
 
@@ -240,7 +241,7 @@ module.exports = (function() {
       log('view message id is: '+req.query.id);
       var mailUid = req.query.id;
       _email.getOneMail(mailUid,function(mailContent){
-        log('callback result is:');
+        //log('callback result is:');
         //log(mailContent);
         //log(JSON.parse(mailContent));
         res.send(mailContent);
@@ -260,7 +261,41 @@ module.exports = (function() {
         }
       });
     })
-    
+    /************************************************************************************************/
+    app.post("/draft",function(req,res,next){
+      var dateNow = Date.now;
+      var errors = null;
+      var draftMsg = JSON.parse(req.body.message);
+      var newmsg ={
+        'uid':'d'+dateNow,
+        'to':draftMsg['To'],
+        'from':"me",
+        'subject':draftMsg['Subject'],
+        'date':new Date(dateNow).toString(),
+        'flags':"\\Draft",
+        'folder':3
+      }
+      var newmsgObj = newmsg;
+      if(newmsg != null) {
+        fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(newmsg) + "\r\n", {encoding:"utf8","flag":"a+"},function (err) {
+          if (err)
+            errors = err;
+        })
+      }
+      if(newmsgObj != null) {
+        _.assign(newmsgObj,{text:draftMsg['mail-content']});
+        fs.writeFile(path.join(_workingDir, newmsg['uid'] + ".json"), JSON.stringify(newmsgObj), {enconding:"utf8","flag":"w"},function (err) {
+          if (err)
+            errors = err;
+        })
+      }
+      if(errors == null)
+        res.send(newmsg);
+      else
+        res.send({error:"draft error"});
+    })
+
+    /*************************************************************************************************/
     app.get("/logout", function(request, response) {
       _tdxAccessToken = "";
      // _tdxLogin("");

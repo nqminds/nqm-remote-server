@@ -25,8 +25,8 @@ module.exports = (function(){
     var transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
-        user: 'bingjie@nquiringminds.com', // Your email id
-        pass: 'bingjiegao10' // Your password
+        user: 'byod23145842@gmail.com', // Your email id
+        pass: 'Zg3NgLqRZEhr' // Your password
       }
     });
     _.forEach(sentArray,function(element){
@@ -143,19 +143,6 @@ module.exports = (function(){
     log('deleted obj is: ');
     log(updateData.payload);
 
-    //addDataBulk(self._config.commandHost,self._token,upsertData,function(err,response){
-    //  if(err) {
-    //    log(err);
-    //    cb(err,null);
-    //  }
-    //  else {
-    //    addans = response;
-    //    if(upsertans!=null && addans!=null){
-    //      log('not null ans');
-    //      cb(null,upsertans);
-    //    }
-    //  }
-    //});
     sendEmail(upsertData.payload,function(err,ans){
       if(err) {
         log(err)

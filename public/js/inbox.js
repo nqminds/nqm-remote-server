@@ -56,16 +56,56 @@ function send() {
     console.log(text);
     console.log(xmlHttpRequest);
     if(xmlHttpRequest.readyState == 4 && xmlHttpRequest.status == 200){
+      if(this_message['folder'] == 3){
+        this_message['folder'] = 2;
+        this_message['flags'] = "\\Sent";
+        var newData = $$('$datatable1');
+        var sel = newData.getSelectedId(true);
+        console.log(this_message);
+        newData.updateItem = (sel , this_message);
+        var selectedTree = $$("$tree1").getSelectedId();
+        $$("$tree1").select(3);
+        $$("$tree1").select(selectedTree);
+      }
       $$('popupwin').close();
       if(text === 'SENT') {
         webix.message('sent success', null, 20);
       }
       else if(text === 'DRAFTED'){
-        webix.message('sent failed, saved as draft');
+        webix.message('sent failed, saved in the OUTBOX');
       }
     }
   })
 }
+
+/*----------------------------------------------- save draft locally--------------------------------------------*/
+
+function saveDraft(){
+  var new_message = $$("mailform").getValues();
+  console.log(new_message);
+  webix.ajax().post("/draft",{message:new_message},function(text,data,XmlHttprequest){
+    if(XmlHttprequest.readyState == 4 && XmlHttprequest.status == 200){
+      console.log(text);
+      console.log(data);
+      //if(text == "draft error")
+      //  webix.message('save failed');
+      //else {
+      //  console.log(data);
+      //  console.log(text);
+      //  webix.message('Draft saved successfully');
+      //  $$("popupwin").close();
+      //}
+    }
+  })
+}
+/*----------------------------------------------- end save draft locally----------------------------------------*/
+
+/*----------------------------------------------- update local file --------------------------------------------*/
+function updateInbox(updateItem){
+
+}
+/*------------------------------------------------ end update local file ---------------------------------------*/
+
 function upload(){
   webix.ui(filePopup).show();
   $$('popupwin').disable();
@@ -273,6 +313,7 @@ var form = {
       margin:5,
       cols:[
         { view:"button", id:'id_cancelpopup', value:"cancel",click:"console.log('popwin close');$$('popupwin').close();"},
+        {view:"button",id:"id_saveDraft",value:"Save",click:saveDraft},
         { view:"button", value:"send",click:function(){
           if($$('reply-address').validate()){
             send();
@@ -426,12 +467,14 @@ webix.ready(function() {
   });
   $$("$tree1").select(1);
 
+  /*single click on row to view the HTMl content
+  * */
   $$("$datatable1").attachEvent("onAfterSelect",function(obj){
     $$("id_reply").show();
     $$("id_delete").show();
     console.log(obj);
     var this_content = findContent(obj.id);
-    if (this_content['flags'].indexOf("\\Seen") === -1) {
+    if (this_content['flags'].indexOf("\\Seen") === -1 && this_content['flags'].indexOf("\\Draft") === -1) {
       console.log('unseen to seen');
       this_content['from'] = replaceBold(this_content['from']);
       this_content['subject'] = replaceBold(this_content['subject']);
@@ -453,6 +496,32 @@ webix.ready(function() {
     })
 
   });
+  /*--------------------------------------------------------------------------------------------------------*/
+  /*
+  * double click to continue with draft*/
+  $$("$datatable1").attachEvent('onItemDblClick',function(obj){
+    var this_msg = findContent($$("$datatable1").getSelectedId());
+    if(this_msg['folder'] == 3) {
+      var replyTo = this_msg['to'];
+      var this_subject = this_msg['subject'];
+      webix.ajax().post("/message?id="+this_msg['uid'],function(text,data,XmlHttpRequest){
+        if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200) {
+          //console.log(text);
+          var contentHtml = "";
+          if (text != "") {
+            contentHtml += text;
+          }
+          webix.ui(popup).show();
+          $$("reply-address").setValue(replyTo);
+          $$("subject").setValue(this_subject);
+          $$("mail-content").setValue(contentHtml);
+        }
+      })
+    }
+  })
+
+
+  /*--------------------------------------------------------------------------------------------------------*/
 
   /*
    * create email
@@ -477,14 +546,15 @@ webix.ready(function() {
       subject = subject.replace(/Re: /ig,'');
     }
     subject = "Re: "+subject;
-    replyTo = replyTo.split('<')[1];
-    replyTo = replyTo.substr(0,replyTo.length-1);
+    if(replyTo.indexOf("<") !== -1) {
+      replyTo = replyTo.split('<')[1];
+      replyTo = replyTo.substr(0, replyTo.length - 1);
+    }
 
     console.log(replyTo);
     $$("reply-address").setValue(replyTo);
     $$("subject").setValue(subject);
   })
-
 
   /*
    * delete selected email
@@ -492,15 +562,22 @@ webix.ready(function() {
   $$('id_delete').attachEvent('onItemClick',function(id,e){
     var this_msg = findContent($$('$datatable1').getSelectedId());
     console.log(this_msg['uid']);
+    this_msg['flags'] = this_msg['flags']+"\\Deleted";
+    this_msg['folder'] = 4;
+    var newData = $$('$datatable1');
+    var sel = newData.getSelectedId(true);
+    newData.updateItem = (sel , this_msg);
+    var selectedTree = $$("$tree1").getSelectedId();
+    $$("$tree1").select(4);
+    $$("$tree1").select(selectedTree);
     webix.ajax().put("/message",{message:this_msg},function(text, data, XmlHttpRequest){
       console.log('delete message'+text);
-
       if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200){
         webix.message('deleted success',null,200);
-       // gData
       }
     })
   });
+
 
   $$('id_cancelpopup').attachEvent('onItemClick',function(){
     console.log('popwin close');

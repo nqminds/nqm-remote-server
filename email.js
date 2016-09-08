@@ -76,7 +76,7 @@ module.exports = (function() {
               data_array[i]['folder'] = 2;
             }
             else if (data_array[i]['flags'].indexOf("\\Draft") !== -1) {
-              data_array[i]['folder'] = 3;
+              data_array[i]['folder'] = -1;
             }
             savedObj = _.pick(data_array[i], ["uid", "to", "from", "subject", "date", "flags", "folder"]);
             saved_array.push(savedObj);
@@ -118,23 +118,6 @@ module.exports = (function() {
       }
     })
   }
-  /*-------------------------- upsert function -----------------------*/
-  function upsertDataBulk(commandHost, accessToken, datasetId, data, cb) {
-    var url = util.format("%s/commandSync/dataset/data/upsertMany", commandHost);
-    var bulk = {};
-    bulk.datasetId = datasetId;
-    bulk.payload = [].concat(data);
-    log(data);
-    log("sending upsertMany [%d - %d bytes]",data.length, JSON.stringify(data).length);
-    request({ url: url, timeout: 3600000, method: "post", headers: { authorization: "Bearer " + accessToken }, json: true, body: bulk }, function(err, response, content) {
-      if (!handleError(err, response, log, cb)) {
-        log("result from server: %j", response.body);
-        cb(null);
-      }
-    });
-  }
-  /*---------------------------end upsert function ---------------------------*/
-
   /*--------------------------- get One Mail mailparsered---------------------*/
   Inbox.prototype.getOneMail = function(mailUid,cb) {
     log('read filename is:'+mailUid);
@@ -152,10 +135,10 @@ module.exports = (function() {
           attachment.stream.pipe(output);
         });
       }
-      if (mail_object.html === undefined) {
+      if (mail_object.html === undefined && mail_object.text !== undefined) {
         mailObj['text'] = mail_object.text;
       }
-      else {
+      else if(mail_object.html !== undefined){
         mailObj['text'] = mail_object.html;
       }
       //log(mailObj['text']);
@@ -167,6 +150,20 @@ module.exports = (function() {
   /*---------------------------- end mailparser -------------------------------*/
   Inbox.prototype.getInbox = function(tdxAPI,cb) {
     var self = this;
+    var localDrafts = [];
+    try{
+      var drafts = fs.readFileSync(path.join(_workingDir,'drafts.json')).toString();
+      localDrafts= drafts.split("\r\n");
+      if(localDrafts.length>0){
+        for(var i=0;i<localDrafts.length-1;i++){
+          localDrafts[i] = JSON.parse(localDrafts[i]);
+        }
+      }
+    }
+    catch(e){
+      log('local draft error'+e);
+      localDrafts = [];
+    }
     fs.stat(path.join(_workingDir,"inbox.json"),function(err,stat){
       if(err){
         getTBXtable.call(self,tdxAPI,cb);
@@ -189,7 +186,9 @@ module.exports = (function() {
             }
             ansMessages_array.push(oldMessageObj);
           }
-          cb(null,ansMessages_array);
+          log('local drafts are');
+          log(localDrafts);
+          cb(null,ansMessages_array.concat(localDrafts));
         }
         else
           cb('error',null);
@@ -220,13 +219,6 @@ module.exports = (function() {
       id:self._config.emailtable_ID,
       d:updateData
     }
-    //upsertDataBulk(self._config.commandHost,tdxToken,self._config.byodimapboxes_ID,updateObj,function(err){
-    //  log(err);
-    //  if(err)
-    //    cb(err,null);
-    //  else
-    //  cb(null,'deleted');
-    //})
     fileCache.cacheThis(updateObj,function(err){
       if(err)
         cb(err);
