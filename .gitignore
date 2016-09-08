@@ -33,3 +33,4 @@ fileCache.json
 fileStruct.json
 attachments/
 docViews/
+*xml

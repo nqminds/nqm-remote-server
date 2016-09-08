@@ -112,13 +112,13 @@ module.exports = (function() {
 
 				_emailAccessToken = accessToken;
       			_sync = new syncdriver(emailconfig,_emailAccessToken);
-        		res.render("apps", { config: config });
+        		res.render("auth", { config: config });
 			});
 		} else if (timerEnabled && _emailAccessToken==null)
 				res.render("apps", { config: config });
 		else if (_emailAccessToken!=null) {
 				_sync = new syncdriver(emailconfig,_emailAccessToken);
-                res.render("apps", { config: config });
+                res.render("auth", { config: config });
 		}
     });
 
@@ -156,7 +156,7 @@ module.exports = (function() {
     */
     app.get('/email', function (req, res,next) {
         _fileCache.setSyncHandler(_sync);
-      log('get /email token: '+_emailAccessToken);
+      //log('get /email token: '+_emailAccessToken);
         _email.getInbox(_tdxAPI, function(err,ans){
           if(err) {
             log(err);
@@ -241,7 +241,7 @@ module.exports = (function() {
       var mailUid = req.query.id;
       _email.getOneMail(mailUid,function(mailContent){
         log('callback result is:');
-        log(mailContent);
+        //log(mailContent);
         //log(JSON.parse(mailContent));
         res.send(mailContent);
       })
