@@ -37,7 +37,6 @@ module.exports = (function() {
 
   var Inbox = function(config, workingDir){
     this._config = config;
-    this._tdxAPI =  (new (require("nqm-api-tdx"))(config));
     this._sync = null;
 	_workingDir = workingDir;
   }
@@ -68,14 +67,18 @@ module.exports = (function() {
     });
   }
   /*---------------------------end upsert function ---------------------------*/
+
   /*--------------------------- get One Mail mailparsered---------------------*/
   Inbox.prototype.getOneMail = function(mailUid,cb) {
-    var mailFile = fs.readFileSync(path.join(_workingDir,mailUid+'.log'));
-    log('read from the file:');
-    log(JSON.parse(mailFile));
+    log('read filename is:'+mailUid);
+    var mailObj = JSON.parse(fs.readFileSync(path.join(_workingDir,mailUid+'.json')));
+    //log('read file result is:');
+    //log(mailObj);
+
     var mailparser = new MailParser({streamAttachments: true});
     mailparser.on("end", function (mail_object) {
       createFolder('attachments');
+      log(mail_object.html);
       if (mail_object.attachments != undefined) {
         mail_object.attachments.forEach(function (attachment) {
           log('attachments', attachment.fileName);
@@ -84,68 +87,80 @@ module.exports = (function() {
         });
       }
       if (mail_object.html === undefined) {
-        data_array[i]['text'] = mail_object.text;
+        mailObj['text'] = mail_object.text;
       }
-      else
-        data_array[i]['text'] = mail_object.html;
+      else {
+        mailObj['text'] = mail_object.html;
+      }
+      //log(mailObj['text']);
+      cb(mailObj['text']);
     });
-    //mailparser.write(data_array[i]['text']);
-    //mailparser.end();
+    mailparser.write(mailObj['text']);
+    mailparser.end();
   }
   /*---------------------------- end mailparser -------------------------------*/
-  Inbox.prototype.getInbox = function(tdxToken,cb){
+  Inbox.prototype.getInbox = function(tdxAPI,cb) {
     var self = this;
     var errors = null;
-    self._tdxAPI.query("datasets/" + self._config.byodimapboxes_ID + "/data", null, null, null, tdxToken,function (qerr, data) {
-      if (qerr){
-        cb(qerr,null);
+    log(self._config.byod)
+    tdxAPI.query("datasets/" + self._config.emailtable_ID + "/data", null, null, null, function (qerr, data) {
+      if (qerr) {
+        log('cannot get the data');
+        cb(qerr, null);
       }
-      if(data != null){
+      if (data != null) {
+
         var data_array = data.data;
         var saved_array = [];
-        for(var i=0; i< data_array.length;i++){
-          var savedObj = {};
+        var savedObj = {};
+
+        for (var i = 0; i < data_array.length; i++) {
           if (data_array[i]['flags'].indexOf("\\Deleted") !== -1) {
-              data_array[i]['folder'] = 4;
-            }
-            else if (data_array[i]['flags'].indexOf("\\Inbox") !== -1 && data_array[i]['flags'].indexOf("\\deleted") === -1) {
-              data_array[i]['folder'] = 1;
-            }
-            else if (data_array[i]['flags'].indexOf("\\Sent") !== -1) {
-              data_array[i]['folder'] = 2;
-            }
-            else if (data_array[i]['flags'].indexOf("\\Draft") !== -1) {
-              data_array[i]['folder'] = 3;
-            }
-            if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
-              data_array[i]['from'] = '<b>' + data_array[i]['from'] + '<b>';
-              data_array[i]['date'] = '<b>' + data_array[i]['date'] + '<b>';
-              data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '<b>';
-            }
-          fs.writeFile(path.join(_workingDir,data_array[i]['uid']+'.log'),JSON.stringify(data_array[i],null,4),{encoding:"utf8",flag:"w"},function(save_err){
-            if(save_err) {
+            data_array[i]['folder'] = 4;
+          }
+          else if (data_array[i]['flags'].indexOf("\\Inbox") !== -1 && data_array[i]['flags'].indexOf("\\deleted") === -1) {
+            data_array[i]['folder'] = 1;
+          }
+          else if (data_array[i]['flags'].indexOf("\\Sent") !== -1) {
+            data_array[i]['folder'] = 2;
+          }
+          else if (data_array[i]['flags'].indexOf("\\Draft") !== -1) {
+            data_array[i]['folder'] = 3;
+          }
+          if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
+            data_array[i]['from'] = '<b>' + data_array[i]['from'] + '<b>';
+            data_array[i]['date'] = '<b>' + data_array[i]['date'] + '<b>';
+            data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '<b>';
+          }
+          savedObj = _.pick(data_array[i], ["uid", "to", "from", "subject", "date", "flags","folder"]);
+          saved_array.push(savedObj);
+
+          fs.writeFile(path.join(_workingDir, data_array[i]['uid'] + '.json'), JSON.stringify(data_array[i], null, 4), {
+            encoding: "utf8",
+            flag: "w"
+          }, function (save_err) {
+            if (save_err) {
               log(save_err);
               errors = save_err;
             }
           })
-          savedObj = _.pick(data_array[i],["uid","to","from","subject","date"]);
-          saved_array.push(savedObj);
-        }
 
-		fs.writeFile(path.join(_workingDir,'inbox.json'),JSON.stringify(saved_array,null,4),{encoding:"utf8",flag:"w"},function(err){
-          if(err) {
-            log(err);
-            errors = err;
-          }
-          else
-            log('save done');
-        })
+          fs.writeFile(path.join(_workingDir, 'inbox.json'), JSON.stringify(savedObj, null, 4), {
+            encoding: "utf8",
+            flag: "a+"
+          }, function (save_err) {
+            if (save_err) {
+              log(save_err);
+              errors = save_err;
+            }
+          })
+        }
+        if(errors == null)
+          cb(null,data_array);
+        else
+          cb('errors',null);
       }
-      if(errors == null)
-        cb(null,data_array)
-      else
-        cb(errors,null);
-    });
+    })
   }
   /*--------------------------- update function ---------------------------*/
   Inbox.prototype.update = function(msg,fileCache,cb){
@@ -167,7 +182,7 @@ module.exports = (function() {
       date:msg['date']
     };
     var updateObj = {
-      id:self._config.byodimapboxes_ID,
+      id:self._config.emailtable_ID,
       d:updateData
     }
     //upsertDataBulk(self._config.commandHost,tdxToken,self._config.byodimapboxes_ID,updateObj,function(err){
@@ -242,7 +257,7 @@ module.exports = (function() {
       _.assign(sentData,InReplyTo);
     }
     var sentObj = {
-      id:self._config.byodimapboxes_ID,
+      id:self._config.emailtable_ID,
       d:sentData
     }
     log(sentObj);
@@ -260,9 +275,9 @@ module.exports = (function() {
     })
   }
   /*--------------------------- END send function ----------------------------*/
-  Inbox.prototype.getAttachmentsList = function(tdxToken,cb){
+  Inbox.prototype.getAttachmentsList = function(cb){
     var self = this;
-    self._tdxAPI.query("datasets/" + self._config.byodattachment_ID + "/data", null, null, null, tdxToken,function (qerr, data) {
+    self._tdxAPI.query("datasets/" + self._config.byodattachment_ID + "/data", null, null, null, self._config.byodimapboxes_token,function (qerr, data) {
       if(qerr) {
         log(qerr);
         cb(qerr,null);
@@ -279,4 +294,4 @@ module.exports = (function() {
     })
   }
   return Inbox;
-}())
+}());

@@ -257,7 +257,7 @@ var form = {
       id:"subject",
       name: "Subject",
       label: "Subject",
-      labelWidth: "100",
+      labelWidth: "100"
     },
     {
       id:'mail-content',
@@ -427,15 +427,17 @@ webix.ready(function() {
     $$("id_delete").show();
     console.log(obj);
     var this_content = findContent(obj.id);
-    webix.ajax().post("/message?id="+this_content['uid'],function(text,data,XmlHttpRequest){
-      
-    })
 
-    var contentHtml = "";
-    if(this_content != "") {
-      contentHtml += this_content['text'];
-    }
-    $$("mailview").setHTML(contentHtml);
+    webix.ajax().post("/message?id="+this_content['uid'],function(text,data,XmlHttpRequest){
+      if(xmlHttpRequest.readyState == 4 && xmlHttpRequest.status == 200) {
+        console.log(text);
+        var contentHtml = "";
+        if (text != "") {
+          contentHtml += text;
+        }
+        $$("mailview").setHTML(contentHtml);
+      }
+    })
   });
 
 
