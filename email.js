@@ -371,7 +371,9 @@ module.exports = (function() {
     }
     if(newmsgObj != null) {
       _.assign(newmsgObj,{text:draftMsg['mail-content']});
-
+      if(draftMsg["attachments"] ! = null || draftMsg["attachments"] != []){
+        
+      }
       fs.writeFile(path.join(_workingDir, newmsg['uid'] + ".json"), JSON.stringify(newmsgObj), {enconding:"utf8","flag":"w"},function (err) {
         if (err)
           result.send("draft error");
