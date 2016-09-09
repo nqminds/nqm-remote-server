@@ -89,6 +89,9 @@ function saveDraft(){
       else {
         var this_msg = JSON.parse(text);
         this_msg['folder'] = 3;
+        if(gAttachDoc.length>0){
+          //this_msg[]
+        }
         var newData = $$('$datatable1');
         newData.add = (this_msg);
         console.log(newData);
@@ -103,12 +106,6 @@ function saveDraft(){
   })
 }
 /*----------------------------------------------- end save draft locally----------------------------------------*/
-
-/*----------------------------------------------- update local file --------------------------------------------*/
-function updateInbox(updateItem){
-
-}
-/*------------------------------------------------ end update local file ---------------------------------------*/
 
 function upload(){
   webix.ui(filePopup).show();
@@ -299,8 +296,8 @@ var form = {
     },
     {
       view: "text",
-      id: "Bcc",
-	  name: "Bcc",
+      id:"Bcc",
+      name: "Bcc",
       label: "Bcc",
       labelWidth: "100"
     },
@@ -516,6 +513,8 @@ webix.ready(function() {
     if(this_msg['folder'] == 3) {
       var replyTo = this_msg['to'];
       var this_subject = this_msg['subject'];
+      console.log(this_msg['cc']);
+      console.log(this_msg['Bcc']);
       webix.ajax().post("/message?id="+this_msg['uid'],function(text,data,XmlHttpRequest){
         if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200) {
           //console.log(text);
@@ -526,6 +525,8 @@ webix.ready(function() {
           webix.ui(popup).show();
           $$("reply-address").setValue(replyTo);
           $$("subject").setValue(this_subject);
+          $$("Cc").setValue(this_msg['cc']);
+          $$("Bcc").setValue(this_msg['Bcc']);
           $$("mail-content").setValue(contentHtml);
 		  $$('Cc').setValue(this_msg['cc']);
 		  $$('Bcc').setValue(this_msg['Bcc']);
