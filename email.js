@@ -17,7 +17,9 @@ module.exports = (function() {
   var path = require('path');
   var MailParser = require('mailparser').MailParser;
   var _workingDir = null;
-  var dirname = path.join(__dirname,'public/');
+  var dirname = path.join(__dirname,'public/');  
+  var dictDrafts = {};
+  var dictInbox = {};
 
   var handleError = function(err, response, log, cb) {
     if (err || response.statusCode !== 200 || (response.body && response.body.error)) {
@@ -49,16 +51,21 @@ module.exports = (function() {
         error = err;
       }
       else{
-        var old_array = fs.readFileSync(updateFile).toString().split("\r\n");
-        console.log('last one is:',old_array[old_array.length-1]);
-        fs.writeFileSync(updateFile, "", {enconding: "utf8", flag: "w"});
-        for(var i=0;i<old_array.length-1;i++) {
-          old_array[i] = JSON.parse(old_array[i]);
-          if (old_array[i]['uid'] === updateObj['uid']) {
-            old_array[i] = updateObj;
-          }
-          fs.writeFileSync(updateFile, JSON.stringify(old_array[i]) + "\r\n", {enconding: "utf8", flag: "a+"});
+        dictInbox[updateObj['uid']] = updateObj;
+
+        try{
+          fs.unlinkSync(path.join(_workingDir, "inbox.json"));
+        } catch(err) {
+          log("inbox.json deletion:"+err);
         }
+
+        for (var key in dictInbox) {
+          fs.writeFile(path.join(_workingDir, "inbox.json"), JSON.stringify(dictInbox[key]) + "\r\n", {encoding:"utf8","flag":"a"},function (err) {
+            if (err)
+              result.send("Draft error");
+          });
+        }
+
       }
       return error;
     })
@@ -81,6 +88,7 @@ module.exports = (function() {
       if (qerr) {
         log('cannot get the data');
         cb("NULL DATA", null);
+        dictInbox = {};
       }
       if (data != null) {
 
@@ -120,6 +128,7 @@ module.exports = (function() {
                 errors = maperr;
               }
             })
+            dictInbox[savedObj.uid] = savedObj;
 
             fs.writeFile(path.join(_workingDir, data_array[i]['uid'] + '.json'), JSON.stringify(data_array[i], null, 4), {
               encoding: "utf8",
@@ -190,20 +199,23 @@ module.exports = (function() {
   /*---------------------------- end mailparser -------------------------------*/
   Inbox.prototype.getInbox = function(tdxAPI,cb) {
     var self = this;
-    var localDrafts = [];
+  	var localDrafts = [];
+
     try{
-      var drafts = fs.readFileSync(path.join(_workingDir,'drafts.json')).toString();
-      localDrafts= drafts.split("\r\n");
-      if(localDrafts.length>0){
-        for(var i=0;i<localDrafts.length-1;i++){
-          localDrafts[i] = JSON.parse(localDrafts[i]);
-        }
+      var drafts = fs.readFileSync(path.join(_workingDir,'drafts.json')).toString().split("\r\n");
+
+      for (var i = 0; i < drafts.length - 1; i++) {
+        var dparsed = JSON.parse(drafts[i]);
+        localDrafts.push(dparsed);
+        dictDrafts[dparsed.uid] = dparsed;
       }
     }
     catch(e){
       log('local draft error:'+e);
       localDrafts = [];
+	    dictDrafts = {};
     }
+    log("LENGHT:"+localDrafts.length);
     fs.stat(path.join(_workingDir,"inbox.json"),function(err,stat){
       if(err){
         getTBXtable.call(self,tdxAPI,cb);
@@ -218,6 +230,7 @@ module.exports = (function() {
         if(oldMessages_array.length>0) {
           for (var i = 0; i < oldMessages_array.length-1; i++) {
             var oldMessageObj = null;
+            dictInbox[oldMessages_array[i].uid] = oldMessages_array[i];
             oldMessageObj = JSON.parse(oldMessages_array[i]);
             if (oldMessageObj['flags'].indexOf("\\Seen") === -1) {
               oldMessageObj['from'] = '<b>' + oldMessageObj['from'] + '<b>';
@@ -286,8 +299,8 @@ module.exports = (function() {
     var transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
-        user: 'bingjie@nquiringminds.com', // Your email id
-        pass: 'bingjiegao10' // Your password
+        user: 'byod23145842@gmail.com', // Your email id
+        pass: 'Zg3NgLqRZEhr' // Your password
       }
     });
 
@@ -357,11 +370,9 @@ module.exports = (function() {
   /*--------------------------- END send function ----------------------------*/
 
   Inbox.prototype.saveDraft = function(draftMsg,result){
-    var oldUid = draftMsg['draftUid'];
-    log('olduid is:'+oldUid);
     var dateNow = Date.now();
     var newmsg ={
-      'uid':'d'+dateNow,
+      'uid':(draftMsg['draftUid']===undefined)?'d'+dateNow:draftMsg['draftUid'],
       'to':draftMsg['To'],
       'cc':draftMsg['Cc'],
       'Bcc':draftMsg['Bcc'],
@@ -371,26 +382,34 @@ module.exports = (function() {
       'flags':"\\Draft",
       'folder':3
     }
-    var newmsgObj = newmsg;
-    if(newmsg != null) {
-      fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(newmsg) + "\r\n", {encoding:"utf8","flag":"a+"},function (err) {
-        if (err)
-          result.send("drafts error");
-        else
-          result.send(newmsg);
-      })
+    var extendedMsg = JSON.parse(JSON.stringify(newmsg));
+
+    dictDrafts[newmsg['uid']] = newmsg;
+
+    try{
+      fs.unlinkSync(path.join(_workingDir, "drafts.json"));
+    } catch(err) {
+      log("drafts.json deletion:"+err);
     }
-    if(newmsgObj != null) {
-      _.assign(newmsgObj,{text:draftMsg['mail-content']});
-      if("attachments" in draftMsg){
-        _.assign(newmsgObj,{attachments:draftMsg['attachments']});
-      }
-      fs.writeFile(path.join(_workingDir, newmsg['uid'] + ".json"), JSON.stringify(newmsgObj), {enconding:"utf8","flag":"w"},function (err) {
+
+    for (var key in dictDrafts) {
+      fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(dictDrafts[key]) + "\r\n", {encoding:"utf8","flag":"a"},function (err) {
         if (err)
-          result.send("draft error");
-      })
+          result.send("Draft error");
+      });
     }
+
+    _.assign(extendedMsg,{text:draftMsg['mail-content']});
+
+    if("attachments" in draftMsg)
+      _.assign(extendedMsg,{attachments:draftMsg['attachments']});
+
+    fs.writeFile(path.join(_workingDir, newmsg['uid'] + ".json"), JSON.stringify(extendedMsg), {enconding:"utf8","flag":"w"},function (err) {
+      if (err) result.send("draft error");
+      else result.send(newmsg);
+    });
   }
+
   Inbox.prototype.getAttachmentsList = function(cb){
     var self = this;
     self._tdxAPI.query("datasets/" + self._config.byodattachment_ID + "/data", null, null, null, self._config.byodimapboxes_token,function (qerr, data) {

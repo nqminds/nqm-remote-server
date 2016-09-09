@@ -92,11 +92,23 @@ function saveDraft(){
         webix.message('save failed');
       else {
         var this_msg = JSON.parse(text);
-        this_msg['folder'] = 3;
         var newData = $$('$datatable1');
-        newData.add = (this_msg);
-        console.log(newData);
-        console.log(this_msg);
+        var sel = $$("$datatable1").getSelectedId(true);
+        this_msg['folder'] = 3;
+        if(_u.find(gData,{uid:this_msg['uid']})){
+          newData.updateItem(sel,this_msg);
+        }
+        else{
+          gData.push(this_msg);
+          console.log(gData);
+          $$("$datatable1").refresh();
+          //$$("$datatable1").clearAll();
+          //$$("$datatable1").load(gData);
+        }
+        //
+        //newData.add = (this_msg);
+        //console.log(newData);
+        //console.log(this_msg);
         var selectedTree = $$("$tree1").getSelectedId();
         $$("$tree1").select(2);
         $$("$tree1").select(selectedTree);
