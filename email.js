@@ -42,27 +42,26 @@ module.exports = (function() {
   }
 
   /*--------------------------------- update local file ----------------------------------------*/
-  function updateLocal(oldObj,updateObj){
-    var oldLength = (JSON.stringify(oldObj)+"\r\n").length;
-    var newBuffer = new Buffer(JSON.stringify(updateObj)+"\r\n");
-    var newLength = newBuffer.length;
-    var map_array = fs.readFileSync(path.join(_workingDir,"map.json")).toString().split("\r\n");
-    for(var i=0;i<map_array.length-1;i++){
-      map_array[i] = JSON.parse(map_array[i]);
-    }
-    log(updateObj['uid']);
-    var offsetLine = _.find(map_array,{"uid":updateObj['uid']})['mapLine'];
-    log('offsetLine is: ',offsetLine);
-    var mapfd = fs.openSync(path.join(_workingDir,"inbox.json"), 'r+');
-    fs.writeSync(mapfd,newBuffer,0,oldLength>newLength?oldLength:newLength,offsetLine);
-    fs.close(mapfd);
-    //fs.write(mapfd,newBuffer,0,newBuffer.length,offsetLine,function(err){
-    //  if(err)
-    //  log(err);
-    //  else {
-    //    log('local inbox.json saved');
-    //  }
-    //})
+  function updateLocal(updateObj,updateFile){
+    var error = null;
+    fs.stat(updateFile,function(err,stat){
+      if(err){
+        error = err;
+      }
+      else{
+        var old_array = fs.readFileSync(updateFile).toString().split("\r\n");
+        console.log('last one is:',old_array[old_array.length-1]);
+        fs.writeFileSync(updateFile, "", {enconding: "utf8", flag: "w"});
+        for(var i=0;i<old_array.length-1;i++) {
+          old_array[i] = JSON.parse(old_array[i]);
+          if (old_array[i]['uid'] === updateObj['uid']) {
+            old_array[i] = updateObj;
+          }
+          fs.writeFileSync(updateFile, JSON.stringify(old_array[i]) + "\r\n", {enconding: "utf8", flag: "a+"});
+        }
+      }
+      return error;
+    })
   }
   /*----------------------------------- end update local file-----------------------------------*/
 
@@ -240,6 +239,7 @@ module.exports = (function() {
   /*--------------------------- update function ---------------------------*/
   Inbox.prototype.update = function(oldmsg,fileCache,cb){
     var self = this;
+    var errors = null;
     log(self._config.commandHost);
     log('update');
     oldmsg = JSON.parse(oldmsg);
@@ -257,19 +257,26 @@ module.exports = (function() {
       subject:msg['subject'],
       date:msg['date']
     };
-    var localupdateData = _.omit(updateData,["text","modseq"]);
-    updateLocal(oldmsg,localupdateData);
+    var localupdateData = _.omit(updateData,["text","modseq","textcount"]);
+    errors = updateLocal(localupdateData,path.join(_workingDir,"inbox.json"));
+    try {
+      fs.writeFileSync(path.join(_workingDir, updateData['uid'] + ".json"), JSON.stringify(updateData), {
+        enconding: "utf8",
+        flag: "w"
+      })
+    }catch(e){
+      error = e;
+    }
     var updateObj = {
       id:self._config.emailtable_ID,
       d:updateData
     }
-    //fileCache.cacheThis(updateObj,function(err){
-    //  if(err)
-    //    cb(err);
-    //  else
-    //    cb(null);
-    //});
-
+    fileCache.cacheThis(updateObj,function(err){
+      if(err)
+        cb(err);
+      else if(errors == null)
+        cb(null);
+    });
   }
   /*--------------------------- END update function ---------------------------*/
   Inbox.prototype.send = function(msgheader,msgcontent,cb){
@@ -368,7 +375,7 @@ module.exports = (function() {
     if(newmsg != null) {
       fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(newmsg) + "\r\n", {encoding:"utf8","flag":"a+"},function (err) {
         if (err)
-          result.send("drafe error");
+          result.send("drafts error");
         else
           result.send(newmsg);
       })
