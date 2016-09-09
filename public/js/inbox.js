@@ -290,7 +290,7 @@ var form = {
     {
       view: "text",
       id: "Cc",
-	    name: "Cc",
+	  name: "Cc",
       label: "Cc",
       labelWidth: "100"
     },
@@ -528,6 +528,8 @@ webix.ready(function() {
           $$("Cc").setValue(this_msg['cc']);
           $$("Bcc").setValue(this_msg['Bcc']);
           $$("mail-content").setValue(contentHtml);
+		  $$('Cc').setValue(this_msg['cc']);
+		  $$('Bcc').setValue(this_msg['Bcc']);
         }
       })
     }
