@@ -355,11 +355,9 @@ module.exports = (function() {
   /*--------------------------- END send function ----------------------------*/
 
   Inbox.prototype.saveDraft = function(draftMsg,result){
-    var oldUid = draftMsg['draftUid'];
-    log('olduid is:'+oldUid);
     var dateNow = Date.now();
     var newmsg ={
-      'uid':'d'+dateNow,
+      'uid':(draftMsg['draftUid']===undefined)?'d'+dateNow:draftMsg['draftUid'],
       'to':draftMsg['To'],
       'cc':draftMsg['Cc'],
       'Bcc':draftMsg['Bcc'],
@@ -368,28 +366,35 @@ module.exports = (function() {
       'date':new Date(dateNow).toString(),
       'flags':"\\Draft",
       'folder':3
-    }
-    var newmsgObj = newmsg;
-	console.log(draftMsg);
-    if(newmsg != null) {
-      fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(newmsg) + "\r\n", {encoding:"utf8","flag":"a+"},function (err) {
-        if (err)
-          result.send("drafe error");
-        else
-          result.send(newmsg);
-      })
-    }
-    if(newmsgObj != null) {
-      _.assign(newmsgObj,{text:draftMsg['mail-content']});
-      if("attachments" in draftMsg){
-        _.assign(newmsgObj,{attachments:draftMsg['attachments']});
-      }
-      fs.writeFile(path.join(_workingDir, newmsg['uid'] + ".json"), JSON.stringify(newmsgObj), {enconding:"utf8","flag":"w"},function (err) {
-        if (err)
-          result.send("draft error");
-      })
-    }
+    };
+	var extendedMsg = JSON.parse(JSON.stringify(newmsg));
+
+	dictDrafts[newmsg['uid']] = newmsg;
+
+	try{
+		fs.unlinkSync(path.join(_workingDir, "drafts.json"));
+	} catch(err) {
+		log("drafts.json deletion:"+err);
+	}
+
+	for (var key in dictDrafts) {
+    	fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(dictDrafts[key]) + "\r\n", {encoding:"utf8","flag":"a"},function (err) {
+        	if (err)
+          		result.send("Draft error");        	
+    	});
+	}
+
+    _.assign(extendedMsg,{text:draftMsg['mail-content']});
+
+    if("attachments" in draftMsg)
+    	_.assign(extendedMsg,{attachments:draftMsg['attachments']});
+    
+    fs.writeFile(path.join(_workingDir, newmsg['uid'] + ".json"), JSON.stringify(extendedMsg), {enconding:"utf8","flag":"w"},function (err) {
+    	if (err) result.send("draft error");
+		else result.send(newmsg);
+   	});
   }
+
   Inbox.prototype.getAttachmentsList = function(cb){
     var self = this;
     self._tdxAPI.query("datasets/" + self._config.byodattachment_ID + "/data", null, null, null, self._config.byodimapboxes_token,function (qerr, data) {
