@@ -110,7 +110,8 @@ module.exports = (function() {
 				log('Email auth token:'+accessToken);
 
 				timerEnabled = false;
-				_emailAccessToken = accessToken;				
+				_emailAccessToken = accessToken;
+        _sync = new syncdriver(emailconfig,_emailAccessToken);
 			}
 		});
   	}
@@ -193,19 +194,20 @@ module.exports = (function() {
 */
 
     /*---------------- get files -----------------------------*/
-    app.get("/files", function(req, res) {
+    app.get("/files", function(req, response) {
 		if (!authState)
-        	_cache.getFiles(response, _tdxAccessToken);
+        	_cache.getFiles(response, _emailAccessToken);
 		else
-			res.render("auth");
+			response.render("auth");
     });
 
     /*
     * get email
     */
     app.get('/email', function (req, res,next) {
-        if (!authState) {
-			_fileCache.setSyncHandler(_sync);
+      if (!authState) {
+        _sync = new syncdriver(emailconfig,_emailAccessToken);
+			  _fileCache.setSyncHandler(_sync);
     		log('get /email token: '+_emailAccessToken);
         	_email.getInbox(_tdxAPI, function(err,ans){
           		if(err) {
@@ -288,11 +290,11 @@ module.exports = (function() {
     app.post(/message/,function(req,res,next){
       log('view message id is: '+req.query.id);
       var mailUid = req.query.id;
-      _email.getOneMail(mailUid,function(mailContent){
+      _email.getOneMail(mailUid,function(mailObj){
         //log('callback result is:');
         //log(mailContent);
         //log(JSON.parse(mailContent));
-        res.send(mailContent);
+        res.send(mailObj);
       })
     })
     /*********************************************************************************************/

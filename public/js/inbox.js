@@ -82,6 +82,7 @@ function send() {
 
 function saveDraft(){
   var new_message = $$("mailform").getValues();
+  console.log(new_message);
   if(gAttachDoc.length>0){
     new_message["attachments"] = gAttachDoc;
   }
@@ -290,7 +291,7 @@ var form = {
     {
       view: "text",
       id: "Cc",
-	  name: "Cc",
+	    name: "Cc",
       label: "Cc",
       labelWidth: "100"
     },
@@ -495,11 +496,7 @@ webix.ready(function() {
     }
     webix.ajax().post("/message?id="+this_content['uid'],function(text,data,XmlHttpRequest){
       if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200) {
-        //console.log(text);
-        var contentHtml = "";
-        if (text != "") {
-          contentHtml += text;
-        }
+        var contentHtml = JSON.parse(text)['text'];
         $$("mailview").setHTML(contentHtml);
       }
     })
@@ -511,25 +508,40 @@ webix.ready(function() {
   $$("$datatable1").attachEvent('onItemDblClick',function(obj){
     var this_msg = findContent($$("$datatable1").getSelectedId());
     if(this_msg['folder'] == 3) {
-      var replyTo = this_msg['to'];
-      var this_subject = this_msg['subject'];
-      console.log(this_msg['cc']);
-      console.log(this_msg['Bcc']);
       webix.ajax().post("/message?id="+this_msg['uid'],function(text,data,XmlHttpRequest){
         if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200) {
-          //console.log(text);
-          var contentHtml = "";
-          if (text != "") {
-            contentHtml += text;
-          }
+          var this_msgObj = JSON.parse(text);
+          var contentHtml = this_msgObj['text'];
+          $$("mailview").setHTML(contentHtml);
+
           webix.ui(popup).show();
-          $$("reply-address").setValue(replyTo);
-          $$("subject").setValue(this_subject);
-          $$("Cc").setValue(this_msg['cc']);
-          $$("Bcc").setValue(this_msg['Bcc']);
+          $$("reply-address").setValue(this_msgObj['to']);
+          $$("subject").setValue(this_msgObj['subject']);
+          $$("Cc").setValue(this_msgObj['cc']);
+          $$("Bcc").setValue(this_msgObj['Bcc']);
           $$("mail-content").setValue(contentHtml);
-		  $$('Cc').setValue(this_msg['cc']);
-		  $$('Bcc').setValue(this_msg['Bcc']);
+          $$('mailform').removeView('attachViewValue');
+
+          $$('mailform').addView({
+            view: "text",
+            id: "draftUid",
+            name: "draftUid",
+            label: "draftUid",
+            hidden:true
+          },0)
+          $$("draftUid").setValue(this_msgObj['uid']);
+
+          if(this_msgObj['attachments']) {
+            gAttachDoc = this_msgObj["attachments"];
+            for (var i = 0; i < gAttachDoc.length; i++) {
+              $$('mailform').addView({
+                view: "label",
+                label: gAttachDoc[i]['docName'] + "<span class='webix_icon uploadAttach-icon fa fa-trash'></span>",
+                id: "attachViewValue",
+                align: "left"
+              }, 5 + i)
+            }
+          }
         }
       })
     }
