@@ -161,7 +161,7 @@ module.exports = (function() {
       }
     }
     catch(e){
-      log('local draft error'+e);
+      log('local draft error:'+e);
       localDrafts = [];
     }
     fs.stat(path.join(_workingDir,"inbox.json"),function(err,stat){

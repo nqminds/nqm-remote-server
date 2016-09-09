@@ -292,14 +292,14 @@ var form = {
     },
     {
       view: "text",
-      id: "Cc"
+      id: "Cc",
 	  name: "Cc",
       label: "Cc",
       labelWidth: "100"
     },
     {
       view: "text",
-      id: "Bcc"
+      id: "Bcc",
 	  name: "Bcc",
       label: "Bcc",
       labelWidth: "100"
@@ -527,7 +527,7 @@ webix.ready(function() {
           $$("reply-address").setValue(replyTo);
           $$("subject").setValue(this_subject);
           $$("mail-content").setValue(contentHtml);
-		  $$('cc').setValue(this_msg['cc']);
+		  $$('Cc').setValue(this_msg['cc']);
 		  $$('Bcc').setValue(this_msg['Bcc']);
         }
       })
