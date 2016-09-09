@@ -122,7 +122,7 @@ function getDocs(){
 exports.getAttachments = function(token,cb){
   createFolder(attachmentPath);
   var docs = getDocs();
-  if(docs.error == null){
+  if(docs.error != null){
     console.log('get IVAN doc error');
     cb(docs.error,null);
   }

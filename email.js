@@ -183,7 +183,7 @@ module.exports = (function() {
         mailObj['text'] = mail_object.html;
       }
       //log(mailObj['text']);
-      cb(mailObj['text']);
+      cb(mailObj);
     });
     mailparser.write(mailObj['text']);
     mailparser.end();
@@ -287,8 +287,10 @@ module.exports = (function() {
     var mailOptions = {
       to: msgheader['To'],
       cc: msgheader['Cc'],
+      bcc:msgheader['Bcc'],
       subject: msgheader['Subject'],
-      html: msgcontent['html']
+      html: msgcontent['html'],
+      flags:"\\Sent"
     };
     var sentData = {
       "uid":msgheader['uid'],
@@ -307,7 +309,7 @@ module.exports = (function() {
       _.forEach(msgcontent['attachments'],function(o){
         var attachfileObj = {
           filename:o['docName'],
-          path:"./public/docViews/"+o['docId']
+          path:path.join(__dirname,"public/docViews/")+o['docId']
         }
         attachArray.push(attachfileObj);
       })
@@ -329,11 +331,11 @@ module.exports = (function() {
     }
     var sentObj = {
       id:self._config.emailtable_ID,
-      d:sentData
+      d:mailOptions
     }
     log(sentObj);
     log(mailOptions);
-    //cb('err',sentObj);
+
 
     transporter.sendMail(mailOptions,function(err,info){
       if(err){
@@ -371,8 +373,8 @@ module.exports = (function() {
     }
     if(newmsgObj != null) {
       _.assign(newmsgObj,{text:draftMsg['mail-content']});
-      if(draftMsg["attachments"] != null || draftMsg["attachments"] != []){
-        
+      if("attachments" in draftMsg){
+        _.assign(newmsgObj,{attachments:draftMsg['attachments']});
       }
       fs.writeFile(path.join(_workingDir, newmsg['uid'] + ".json"), JSON.stringify(newmsgObj), {enconding:"utf8","flag":"w"},function (err) {
         if (err)

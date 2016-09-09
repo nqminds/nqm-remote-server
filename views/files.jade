@@ -8,7 +8,8 @@ block headScript
     script(src='js/nqm-bundle.js')
     script(src='js/webix-proxy.js')
     script(type="text/javascript").
-            var _folders = !{JSON.stringify(folders)};
+        var _config = !{JSON.stringify(config)};
+        var _folders = !{JSON.stringify(folders)};
     script(src='js/files.js')
     
 

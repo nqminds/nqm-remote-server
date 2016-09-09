@@ -34,6 +34,7 @@ module.exports = (function(){
       var mailOptions = {
         to: element['to'],
         cc: element['cc'],
+        bcc:element['Bcc'],
         subject: element['subject'],
         html:element['text']
       }
@@ -52,7 +53,7 @@ module.exports = (function(){
         if(err){
           cb(err,null);
         }
-        cb(null,info.response);
+        cb(null,null);
       })
     })
     log(sentArray);
