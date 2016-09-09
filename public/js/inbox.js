@@ -82,6 +82,7 @@ function send() {
 
 function saveDraft(){
   var new_message = $$("mailform").getValues();
+  console.log(new_message);
   if(gAttachDoc.length>0){
     new_message["attachments"] = gAttachDoc;
   }
@@ -290,7 +291,7 @@ var form = {
     {
       view: "text",
       id: "Cc",
-	  name: "Cc",
+	    name: "Cc",
       label: "Cc",
       labelWidth: "100"
     },
@@ -520,6 +521,16 @@ webix.ready(function() {
           $$("Bcc").setValue(this_msgObj['Bcc']);
           $$("mail-content").setValue(contentHtml);
           $$('mailform').removeView('attachViewValue');
+
+          $$('mailform').addView({
+            view: "text",
+            id: "draftUid",
+            name: "draftUid",
+            label: "draftUid",
+            hidden:true
+          },0)
+          $$("draftUid").setValue(this_msgObj['uid']);
+
           if(this_msgObj['attachments']) {
             gAttachDoc = this_msgObj["attachments"];
             for (var i = 0; i < gAttachDoc.length; i++) {

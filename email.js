@@ -350,6 +350,8 @@ module.exports = (function() {
   /*--------------------------- END send function ----------------------------*/
 
   Inbox.prototype.saveDraft = function(draftMsg,result){
+    var oldUid = draftMsg['draftUid'];
+    log('olduid is:'+oldUid);
     var dateNow = Date.now();
     var newmsg ={
       'uid':'d'+dateNow,
