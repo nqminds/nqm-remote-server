@@ -41,6 +41,31 @@ module.exports = (function() {
 	_workingDir = workingDir;
   }
 
+  /*--------------------------------- update local file ----------------------------------------*/
+  function updateLocal(oldObj,updateObj){
+    var oldLength = (JSON.stringify(oldObj)+"\r\n").length;
+    var newBuffer = new Buffer(JSON.stringify(updateObj)+"\r\n");
+    var newLength = newBuffer.length;
+    var map_array = fs.readFileSync(path.join(_workingDir,"map.json")).toString().split("\r\n");
+    for(var i=0;i<map_array.length-1;i++){
+      map_array[i] = JSON.parse(map_array[i]);
+    }
+    log(updateObj['uid']);
+    var offsetLine = _.find(map_array,{"uid":updateObj['uid']})['mapLine'];
+    log('offsetLine is: ',offsetLine);
+    var mapfd = fs.openSync(path.join(_workingDir,"inbox.json"), 'r+');
+    fs.writeSync(mapfd,newBuffer,0,oldLength>newLength?oldLength:newLength,offsetLine);
+    fs.close(mapfd);
+    //fs.write(mapfd,newBuffer,0,newBuffer.length,offsetLine,function(err){
+    //  if(err)
+    //  log(err);
+    //  else {
+    //    log('local inbox.json saved');
+    //  }
+    //})
+  }
+  /*----------------------------------- end update local file-----------------------------------*/
+
   function createFolder(name) {
     var folderPath = path.join(dirname, name);
     try {
@@ -63,6 +88,7 @@ module.exports = (function() {
         var data_array = data.data;
         var saved_array = [];
         var savedObj = {};
+        var mapLine = 0
         if(data_array !== undefined && data_array.length>0) {
 
           for (var i = 0; i < data_array.length; i++) {
@@ -80,6 +106,21 @@ module.exports = (function() {
             }
             savedObj = _.pick(data_array[i], ["uid", "to", "from", "subject", "date", "flags", "folder"]);
             saved_array.push(savedObj);
+            log("string length is :"+JSON.stringify(savedObj).length);
+            var mapObj = {
+              uid:data_array[i]['uid'],
+              mapLine:mapLine
+            }
+            mapLine += JSON.stringify(savedObj).length+2;
+            fs.writeFile(path.join(_workingDir,"map.json"),JSON.stringify(mapObj)+"\r\n",{
+              enconding:"utf8",
+              flag:"a+"
+            },function(maperr){
+              if(maperr){
+                log(maperr);
+                errors = maperr;
+              }
+            })
 
             fs.writeFile(path.join(_workingDir, data_array[i]['uid'] + '.json'), JSON.stringify(data_array[i], null, 4), {
               encoding: "utf8",
@@ -197,13 +238,14 @@ module.exports = (function() {
 
   }
   /*--------------------------- update function ---------------------------*/
-  Inbox.prototype.update = function(msg,fileCache,cb){
+  Inbox.prototype.update = function(oldmsg,fileCache,cb){
     var self = this;
     log(self._config.commandHost);
     log('update');
+    oldmsg = JSON.parse(oldmsg);
+    var msg = JSON.parse(fs.readFileSync(path.join(_workingDir,oldmsg['uid']+".json")));
+    oldmsg = _.pick(oldmsg,["uid", "to", "from", "subject", "date", "flags", "folder"]);
 
-    msg = JSON.parse(msg);
-    log(msg['textcount']);
     var updateData = {
       uid:msg['uid'],
       textcount:msg['textcount'],
@@ -215,16 +257,18 @@ module.exports = (function() {
       subject:msg['subject'],
       date:msg['date']
     };
+    var localupdateData = _.omit(updateData,["text","modseq"]);
+    updateLocal(oldmsg,localupdateData);
     var updateObj = {
       id:self._config.emailtable_ID,
       d:updateData
     }
-    fileCache.cacheThis(updateObj,function(err){
-      if(err)
-        cb(err);
-      else
-        cb(null);
-    });
+    //fileCache.cacheThis(updateObj,function(err){
+    //  if(err)
+    //    cb(err);
+    //  else
+    //    cb(null);
+    //});
 
   }
   /*--------------------------- END update function ---------------------------*/
