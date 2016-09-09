@@ -317,6 +317,8 @@ module.exports = (function() {
       var newmsg ={
         'uid':'d'+dateNow,
         'to':draftMsg['To'],
+		'cc':draftMsg['Cc'],
+		'Bcc':draftMsg['Bcc'],
         'from':"me",
         'subject':draftMsg['Subject'],
         'date':new Date(dateNow).toString(),
