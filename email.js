@@ -17,7 +17,8 @@ module.exports = (function() {
   var path = require('path');
   var MailParser = require('mailparser').MailParser;
   var _workingDir = null;
-  var dirname = path.join(__dirname,'public/');
+  var dirname = path.join(__dirname,'public/');  
+  var dictDrafts = {};
 
   var handleError = function(err, response, log, cb) {
     if (err || response.statusCode !== 200 || (response.body && response.body.error)) {
@@ -191,19 +192,23 @@ module.exports = (function() {
   /*---------------------------- end mailparser -------------------------------*/
   Inbox.prototype.getInbox = function(tdxAPI,cb) {
     var self = this;
-    var localDrafts = [];
+  	var localDrafts = [];
+
     try{
       var drafts = fs.readFileSync(path.join(_workingDir,'drafts.json')).toString();
       localDrafts= drafts.split("\r\n");
+
       if(localDrafts.length>0){
         for(var i=0;i<localDrafts.length-1;i++){
           localDrafts[i] = JSON.parse(localDrafts[i]);
+		  dictDrafts[localDrafts[i].uid] = localDrafts[i];
         }
       }
     }
     catch(e){
       log('local draft error:'+e);
       localDrafts = [];
+	  dictDrafts = {};
     }
     fs.stat(path.join(_workingDir,"inbox.json"),function(err,stat){
       if(err){
@@ -361,6 +366,7 @@ module.exports = (function() {
       'folder':3
     }
     var newmsgObj = newmsg;
+	console.log(draftMsg);
     if(newmsg != null) {
       fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(newmsg) + "\r\n", {encoding:"utf8","flag":"a+"},function (err) {
         if (err)
