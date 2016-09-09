@@ -346,6 +346,38 @@ module.exports = (function() {
     })
   }
   /*--------------------------- END send function ----------------------------*/
+
+  Inbox.prototype.saveDraft = function(draftMsg,result){
+    var dateNow = Date.now();
+    var newmsg ={
+      'uid':'d'+dateNow,
+      'to':draftMsg['To'],
+      'cc':draftMsg['Cc'],
+      'Bcc':draftMsg['Bcc'],
+      'from':"me",
+      'subject':draftMsg['Subject'],
+      'date':new Date(dateNow).toString(),
+      'flags':"\\Draft",
+      'folder':3
+    }
+    var newmsgObj = newmsg;
+    if(newmsg != null) {
+      fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(newmsg) + "\r\n", {encoding:"utf8","flag":"a+"},function (err) {
+        if (err)
+          result.send("drafe error");
+        else
+          result.send(newmsg);
+      })
+    }
+    if(newmsgObj != null) {
+      _.assign(newmsgObj,{text:draftMsg['mail-content']});
+
+      fs.writeFile(path.join(_workingDir, newmsg['uid'] + ".json"), JSON.stringify(newmsgObj), {enconding:"utf8","flag":"w"},function (err) {
+        if (err)
+          result.send("draft error");
+      })
+    }
+  }
   Inbox.prototype.getAttachmentsList = function(cb){
     var self = this;
     self._tdxAPI.query("datasets/" + self._config.byodattachment_ID + "/data", null, null, null, self._config.byodimapboxes_token,function (qerr, data) {

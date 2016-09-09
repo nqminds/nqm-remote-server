@@ -311,36 +311,9 @@ module.exports = (function() {
     })
     /************************************************************************************************/
     app.post("/draft",function(req,res,next){
-      var dateNow = Date.now();
       var errors = null;
       var draftMsg = JSON.parse(req.body.message);
-      var newmsg ={
-        'uid':'d'+dateNow,
-        'to':draftMsg['To'],
-        'cc':draftMsg['Cc'],
-        'Bcc':draftMsg['Bcc'],
-        'from':"me",
-        'subject':draftMsg['Subject'],
-        'date':new Date(dateNow).toString(),
-        'flags':"\\Draft",
-        'folder':3
-      }
-      var newmsgObj = newmsg;
-      if(newmsg != null) {
-        fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(newmsg) + "\r\n", {encoding:"utf8","flag":"a+"},function (err) {
-          if (err)
-            res.send("drafe error");
-          else
-            res.send(newmsg);
-        })
-      }
-      if(newmsgObj != null) {
-        _.assign(newmsgObj,{text:draftMsg['mail-content']});
-        fs.writeFile(path.join(_workingDir, newmsg['uid'] + ".json"), JSON.stringify(newmsgObj), {enconding:"utf8","flag":"w"},function (err) {
-          if (err)
-            res.send("draft error");
-        })
-      }
+      _email.saveDraft(draftMsg,res);
     })
 
     /*************************************************************************************************/

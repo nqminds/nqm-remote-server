@@ -82,6 +82,9 @@ function send() {
 
 function saveDraft(){
   var new_message = $$("mailform").getValues();
+  if(gAttachDoc.length>0){
+    new_message["attachments"] = gAttachDoc;
+  }
   webix.ajax().post("/draft",{message:new_message},function(text,data,XmlHttprequest){
     if(XmlHttprequest.readyState == 4 && XmlHttprequest.status == 200){
       if(text == "draft error")
@@ -89,9 +92,6 @@ function saveDraft(){
       else {
         var this_msg = JSON.parse(text);
         this_msg['folder'] = 3;
-        if(gAttachDoc.length>0){
-          //this_msg[]
-        }
         var newData = $$('$datatable1');
         newData.add = (this_msg);
         console.log(newData);
