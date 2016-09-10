@@ -8,6 +8,13 @@ console.log(gdocNames);
 
 //lodash underscore
 var _u = _.noConflict();
+for(var gDataIndex = 0; gDataIndex<gData.length;gDataIndex++){
+  if(gData[gDataIndex]['flags'].indexOf("\\Seen") === -1){
+    gData[gDataIndex]['from'] = "<b>"+gData[gDataIndex]["from"]+"<b>";
+    gData[gDataIndex]['subject'] = "<b>"+gData[gDataIndex]["subject"]+"<b>";
+    gData[gDataIndex]['date'] = "<b>"+gData[gDataIndex]["date"]+"<b>";
+  }
+}
 
 
 //global attachment docs variable
@@ -94,12 +101,12 @@ function saveDraft(){
         var this_msg = JSON.parse(text);
         var selItem = $$("$datatable1").getSelectedId(true);
 
-		if (selItem!="")
-			$$("$datatable1").updateItem(selItem,this_msg);
+        if (selItem!="")
+          $$("$datatable1").updateItem(selItem,this_msg);
         else {
           gData.push(this_msg);
-		  $$("$datatable1").loadNext(-1,0);
-		}
+          $$("$datatable1").loadNext(-1,0);
+        }
 
         var selectedTree = $$("$tree1").getSelectedId();
         $$("$tree1").select(2);
@@ -468,7 +475,7 @@ function setupDocLoad() {
   }
 }
 function replaceBold(boldStr){
-  return boldStr.replace(/<b>/gi, "")
+  return boldStr.replace(/<b>/g, "")
 }
 /*--------------------- END attachment popup ------------------------------------------------*/
 webix.ready(function() {
@@ -489,7 +496,9 @@ webix.ready(function() {
     $$("id_delete").show();
     console.log(obj);
     var this_content = findContent(obj.id);
+    console.log(this_content);
     if (this_content['flags'].indexOf("\\Seen") === -1 && this_content['flags'].indexOf("\\Draft") === -1) {
+      console.log(this_content);
       console.log('unseen to seen');
       this_content['from'] = replaceBold(this_content['from']);
       this_content['subject'] = replaceBold(this_content['subject']);

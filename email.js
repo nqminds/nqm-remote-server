@@ -114,7 +114,6 @@ module.exports = (function() {
             }
             savedObj = _.pick(data_array[i], ["uid", "to", "from", "subject", "date", "flags", "folder"]);
             saved_array.push(savedObj);
-            log("string length is :"+JSON.stringify(savedObj).length);
             var mapObj = {
               uid:data_array[i]['uid'],
               mapLine:mapLine
@@ -151,13 +150,13 @@ module.exports = (function() {
               }
             })
 
-            if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
-              log('unseen mails are');
-              log(data_array[i]);
-              data_array[i]['from'] = '<b>' + data_array[i]['from'] + '<b>';
-              data_array[i]['date'] = '<b>' + data_array[i]['date'] + '<b>';
-              data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '<b>';
-            }
+            //if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
+            //  log('unseen mails are');
+            //  log(data_array[i]);
+            //  data_array[i]['from'] = '<b>' + data_array[i]['from'] + '<b>';
+            //  data_array[i]['date'] = '<b>' + data_array[i]['date'] + '<b>';
+            //  data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '<b>';
+            //}
           }
         }
         else{
@@ -178,6 +177,8 @@ module.exports = (function() {
       var newMailObj = _.pick(mailObj,["uid", "to", "from", "subject", "date", "flags", "folder"]);
       mailObj['flags'] += ",\\Seen";
       newMailObj['flags'] += ",\\Seen";
+      log('newMailObj is:');
+      log(newMailObj);
       updateLocal(newMailObj,path.join(_workingDir,"inbox.json"));
       fs.writeFileSync(path.join(_workingDir,newMailObj['uid']+".json"),JSON.stringify(newMailObj),{enconding:"utf8",flag:"w"});
     }
@@ -222,32 +223,29 @@ module.exports = (function() {
       localDrafts = [];
 	    dictDrafts = {};
     }
-    log("LENGHT:"+localDrafts.length);
+
     fs.stat(path.join(_workingDir,"inbox.json"),function(err,stat){
       if(err){
         getTBXtable.call(self,tdxAPI,cb);
       }
     else{
+        dictInbox = {};
         var oldMessages = fs.readFileSync(path.join(_workingDir,"inbox.json")).toString();
         var ansMessages_array = [];
         log('read from inbox.json is:');
         var oldMessages_array = oldMessages.split("\r\n");
-        log('last one is:');
-        log(oldMessages_array[oldMessages_array.length-1]);
         if(oldMessages_array.length>0) {
           for (var i = 0; i < oldMessages_array.length-1; i++) {
             var oldMessageObj = null;
-            dictInbox[oldMessages_array[i].uid] = oldMessages_array[i];
             oldMessageObj = JSON.parse(oldMessages_array[i]);
-            if (oldMessageObj['flags'].indexOf("\\Seen") === -1) {
-              oldMessageObj['from'] = '<b>' + oldMessageObj['from'] + '<b>';
-              oldMessageObj['date'] = '<b>' + oldMessageObj['date'] + '<b>';
-              oldMessageObj['subject'] = '<b>' + oldMessageObj['subject'] + '<b>';
-            }
+            dictInbox[oldMessageObj['uid']] = oldMessageObj;
+            //if (oldMessageObj['flags'].indexOf("\\Seen") === -1) {
+            //  oldMessageObj['from'] = '<b>' + oldMessageObj['from'] + '<b>';
+            //  oldMessageObj['date'] = '<b>' + oldMessageObj['date'] + '<b>';
+            //  oldMessageObj['subject'] = '<b>' + oldMessageObj['subject'] + '<b>';
+            //}
             ansMessages_array.push(oldMessageObj);
           }
-          log('local drafts are');
-          log(localDrafts);
           cb(null,ansMessages_array.concat(localDrafts));
         }
         else

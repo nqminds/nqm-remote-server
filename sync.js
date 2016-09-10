@@ -69,6 +69,8 @@ module.exports = (function(){
     log(bulk);
     log(JSON.stringify(bulk));
     log("sending upsertMany [%d - %d bytes]",data.length, JSON.stringify(data).length);
+    log("accessToken is:",accessToken);
+    log("commandHost is ",commandHost);
     request({ url: url, timeout: 3600000, method: "post", headers: { authorization: "Bearer " + accessToken }, json: true, body: bulk }, function(err, response, content) {
       if (!handleError(err, response, log, cb)) {
         log("result from server: %j", response.body);
