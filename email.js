@@ -58,8 +58,8 @@ module.exports = (function() {
           log("inbox.json updating:"+err);
         }
 
-        log('new dictInbox is:');
-        log(dictInbox);
+        //log('new dictInbox is:');
+        //log(dictInbox);
         for (var key in dictInbox) {
           fs.writeFile(path.join(_workingDir, "inbox.json"), JSON.stringify(dictInbox[key]) + "\r\n", {encoding:"utf8",flag:"a"},function (err) {
             if (err)
@@ -173,15 +173,14 @@ module.exports = (function() {
   Inbox.prototype.getOneMail = function(mailUid,cb) {
     log('read filename is:'+mailUid);
     var mailObj = JSON.parse(fs.readFileSync(path.join(_workingDir,mailUid+'.json')));
-    if(mailObj["flags"].indexOf("\\Seen") === -1){
+    if(mailObj["flags"].indexOf("\\Seen") === -1 && mailObj['flags'].indexOf("\\localDraft") === -1){
       var newMailObj = _.pick(mailObj,["uid", "to", "from", "subject", "date", "flags", "folder"]);
       mailObj['flags'] += ",\\Seen";
       newMailObj['flags'] += ",\\Seen";
-      log('newMailObj is:');
-      log(newMailObj);
       updateLocal(newMailObj,path.join(_workingDir,"inbox.json"));
-      fs.writeFileSync(path.join(_workingDir,newMailObj['uid']+".json"),JSON.stringify(newMailObj),{enconding:"utf8",flag:"w"});
+      fs.writeFileSync(path.join(_workingDir,newMailObj['uid']+".json"),JSON.stringify(mailObj),{enconding:"utf8",flag:"w"});
     }
+
     var mailparser = new MailParser({streamAttachments: true});
     mailparser.on("end", function (mail_object) {
       createFolder('attachments');
@@ -212,6 +211,7 @@ module.exports = (function() {
 
     try{
       var drafts = fs.readFileSync(path.join(_workingDir,'drafts.json')).toString().split("\r\n");
+      dictDrafts = {};
 
       for (var i = 0; i < drafts.length - 1; i++) {
         var dparsed = JSON.parse(drafts[i]);
@@ -227,7 +227,13 @@ module.exports = (function() {
 
     fs.stat(path.join(_workingDir,"inbox.json"),function(err,stat){
       if(err){
-        getTBXtable.call(self,tdxAPI,cb);
+        getTBXtable.call(self,tdxAPI,function(qerr,data_array){
+          if(qerr)
+            cb(qerr,null);
+          else{
+            cb(null,data_array.concat(localDrafts));
+          }
+        });
       }
     else{
         dictInbox = {};
@@ -247,6 +253,7 @@ module.exports = (function() {
             //}
             ansMessages_array.push(oldMessageObj);
           }
+
           cb(null,ansMessages_array.concat(localDrafts));
         }
         else
@@ -264,64 +271,87 @@ module.exports = (function() {
     if(oldmsg['flags'].indexOf("\\localDraft") !== -1){
       try{
         fs.unlinkSync(path.join(_workingDir, oldmsg['uid']+".json"));
-        fs.unlinkSync(path.join(_workingDir, "draft.json"));
+        fs.unlinkSync(path.join(_workingDir, "drafts.json"));
+        dictDrafts = _.omit(dictDrafts,oldmsg['uid']);
       } catch(err) {
         log("drafts.json deletion:"+err);
       }
-
+      log('new dictDraft is:');
+      log(dictDrafts);
       for (var key in dictDrafts) {
-        if(key != oldmsg['uid']) {
-          fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(dictDrafts[key]) + "\r\n", {
-            encoding: "utf8",
-            "flag": "a"
-          }, function (err) {
-            if (err)
-              result.send("Draft error");
-          });
-        }
+        fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(dictDrafts[key]) + "\r\n", {
+          encoding: "utf8",
+          "flag": "a"
+        }, function (err) {
+          if (err)
+            result.send("Draft error");
+        });
       }
       cb(null);
     }
-    var msg = JSON.parse(fs.readFileSync(path.join(_workingDir,oldmsg['uid']+".json")));
-    oldmsg = _.pick(oldmsg,["uid", "to", "from", "subject", "date", "flags", "folder"]);
+    else {
+      var msg = JSON.parse(fs.readFileSync(path.join(_workingDir, oldmsg['uid'] + ".json")));
+      oldmsg = _.pick(oldmsg, ["uid", "to", "from", "subject", "date", "flags", "folder"]);
 
-    var updateData = {
-      uid:msg['uid'],
-      textcount:msg['textcount'],
-      text:msg['text'],
-      flags:msg['flags']+",\\Deleted",
-      modseq:msg['modseq'],
-      from:msg['from'],
-      to:msg['to'],
-      subject:msg['subject'],
-      date:msg['date']
-    };
-    var localupdateData = _.omit(updateData,["text","modseq","textcount"]);
-    errors = updateLocal(localupdateData,path.join(_workingDir,"inbox.json"));
-    try {
-      fs.writeFileSync(path.join(_workingDir, updateData['uid'] + ".json"), JSON.stringify(updateData), {
-        enconding: "utf8",
-        flag: "w"
-      })
-    }catch(e){
-      error = e;
+      var updateData = {
+        uid: msg['uid'],
+        textcount: msg['textcount'],
+        text: msg['text'],
+        flags: msg['flags'] + ",\\Deleted",
+        modseq: msg['modseq'],
+        from: msg['from'],
+        to: msg['to'],
+        subject: msg['subject'],
+        date: msg['date']
+      };
+      var localupdateData = _.omit(updateData, ["text", "modseq", "textcount"]);
+      errors = updateLocal(localupdateData, path.join(_workingDir, "inbox.json"));
+      try {
+        fs.writeFileSync(path.join(_workingDir, updateData['uid'] + ".json"), JSON.stringify(updateData), {
+          enconding: "utf8",
+          flag: "w"
+        })
+      } catch (e) {
+        error = e;
+      }
+      var updateObj = {
+        id: self._config.emailtable_ID,
+        d: updateData
+      }
+      fileCache.cacheThis(updateObj, function (err) {
+        if (err)
+          cb(err);
+        else if (errors == null)
+          cb(null);
+      });
     }
-    var updateObj = {
-      id:self._config.emailtable_ID,
-      d:updateData
-    }
-    fileCache.cacheThis(updateObj,function(err){
-      if(err)
-        cb(err);
-      else if(errors == null)
-        cb(null);
-    });
   }
   /*--------------------------- END update function ---------------------------*/
   Inbox.prototype.send = function(msgheader,msgcontent,cb){
     var self = this;
     log('send email');
     var replyTo = msgheader['uid']>0?msgheader['uid']:"";
+    var draftmsgUid = msgheader['uid'];
+    if(typeof draftmsgUid === 'string' && draftmsgUid.indexOf("d") !== -1){
+      log('deleting a draft locally');
+      try{
+        fs.unlinkSync(path.join(_workingDir, draftmsgUid+".json"));
+        fs.unlinkSync(path.join(_workingDir, "drafts.json"));
+        dictDrafts = _.omit(dictDrafts,draftmsgUid);
+      } catch(err) {
+        log("drafts.json deletion:"+err);
+      }
+
+      for (var key in dictDrafts) {
+        fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(dictDrafts[key]) + "\r\n", {
+          encoding: "utf8",
+          "flag": "a"
+        }, function (err) {
+          if (err)
+            result.send("Draft error");
+        });
+      }
+    }
     var transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {

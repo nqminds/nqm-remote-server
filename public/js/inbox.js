@@ -63,6 +63,7 @@ function send() {
     console.log(text);
     console.log(xmlHttpRequest);
     if(xmlHttpRequest.readyState == 4 && xmlHttpRequest.status == 200){
+      $$('popupwin').close();
       if(this_message['folder'] == 3){
         this_message['folder'] = 2;
         this_message['flags'] = "\\Sent";
@@ -71,10 +72,11 @@ function send() {
         console.log(this_message);
         newData.updateItem = (sel , this_message);
         var selectedTree = $$("$tree1").getSelectedId();
-        $$("$tree1").select(3);
+        $$("$tree1").select(1);
         $$("$tree1").select(selectedTree);
+
       }
-      $$('popupwin').close();
+      else if(this_message)
       if(text === 'SENT') {
         webix.message('sent success', null, 20);
       }
@@ -497,7 +499,7 @@ webix.ready(function() {
     console.log(obj);
     var this_content = findContent(obj.id);
     console.log(this_content);
-    if (this_content['flags'].indexOf("\\Seen") === -1 && this_content['flags'].indexOf("\\Draft") === -1) {
+    if (this_content['flags'].indexOf("\\Seen") === -1 && this_content['flags'].indexOf("\\localDraft") === -1) {
       console.log(this_content);
       console.log('unseen to seen');
       this_content['from'] = replaceBold(this_content['from']);
@@ -603,6 +605,7 @@ webix.ready(function() {
   $$('id_delete').attachEvent('onItemClick',function(id,e){
     var this_msg = findContent($$('$datatable1').getSelectedId());
     console.log(this_msg['uid']);
+    console.log('flag is:',this_msg['flags']);
     this_msg['flags'] = this_msg['flags']+"\\Deleted";
     this_msg['folder'] = 4;
     var newData = $$('$datatable1');

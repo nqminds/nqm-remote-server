@@ -251,10 +251,10 @@ module.exports = (function() {
       var this_uid = req.body.msguid?req.body.msguid:0;
       msgheader = JSON.parse(msgheader);
       msgcontent = JSON.parse(msgcontent);
-      if(!_.isNumber(this_uid)){
-        log(this_uid);
-        this_uid = parseInt(this_uid);
-      }
+      //if(!_.isNumber(this_uid)){
+      //  log(this_uid);
+      //  this_uid = parseInt(this_uid);
+      //}
       msgheader['uid'] = this_uid;
       /*----------------- directly send ----------------------------------------*/
       _email.send(msgheader,msgcontent,function(err,ans){
