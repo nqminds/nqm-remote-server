@@ -82,33 +82,25 @@ function send() {
 
 function saveDraft(){
   var new_message = $$("mailform").getValues();
-  console.log(new_message);
-  if(gAttachDoc.length>0){
+
+  if(gAttachDoc.length>0)
     new_message["attachments"] = gAttachDoc;
-  }
+
   webix.ajax().post("/draft",{message:new_message},function(text,data,XmlHttprequest){
     if(XmlHttprequest.readyState == 4 && XmlHttprequest.status == 200){
       if(text == "draft error")
-        webix.message('save failed');
+        webix.message('Save failed');
       else {
         var this_msg = JSON.parse(text);
-        var newData = $$('$datatable1');
-        var sel = $$("$datatable1").getSelectedId(true);
-        this_msg['folder'] = 3;
-        if(_u.find(gData,{uid:this_msg['uid']})){
-          newData.updateItem(sel,this_msg);
-        }
-        else{
+        var selItem = $$("$datatable1").getSelectedId(true);
+
+		if (selItem!="")
+			$$("$datatable1").updateItem(selItem,this_msg);
+        else {
           gData.push(this_msg);
-          console.log(gData);
-          $$("$datatable1").refresh();
-          //$$("$datatable1").clearAll();
-          //$$("$datatable1").load(gData);
-        }
-        //
-        //newData.add = (this_msg);
-        //console.log(newData);
-        //console.log(this_msg);
+		  $$("$datatable1").loadNext(-1,0);
+		}
+
         var selectedTree = $$("$tree1").getSelectedId();
         $$("$tree1").select(2);
         $$("$tree1").select(selectedTree);
@@ -178,7 +170,8 @@ function findAttachment(msguid){
   return attachment;
 }
 var gridtable = {
-    container:"thetable",
+    css:'table',
+	container:"thetable",
     view:"datatable",css: "rounded_top", scrollX:false,
     columns:[
       { id:"ch1", header:{ content:"masterCheckbox" }, template:"{common.checkbox()}",checkValue:'on', uncheckValue:'off', css:"center", width: 40 },
