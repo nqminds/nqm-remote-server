@@ -208,6 +208,7 @@ module.exports = (function() {
   Inbox.prototype.getInbox = function(tdxAPI,cb) {
     var self = this;
   	var localDrafts = [];
+    log('getInbox function');
 
     try{
       var drafts = fs.readFileSync(path.join(_workingDir,'drafts.json')).toString().split("\r\n");
@@ -258,9 +259,29 @@ module.exports = (function() {
   Inbox.prototype.update = function(oldmsg,fileCache,cb){
     var self = this;
     var errors = null;
-    log(self._config.commandHost);
     log('update');
     oldmsg = JSON.parse(oldmsg);
+    if(oldmsg['flags'].indexOf("\\localDraft") !== -1){
+      try{
+        fs.unlinkSync(path.join(_workingDir, oldmsg['uid']+".json"));
+        fs.unlinkSync(path.join(_workingDir, "draft.json"));
+      } catch(err) {
+        log("drafts.json deletion:"+err);
+      }
+
+      for (var key in dictDrafts) {
+        if(key != oldmsg['uid']) {
+          fs.writeFile(path.join(_workingDir, "drafts.json"), JSON.stringify(dictDrafts[key]) + "\r\n", {
+            encoding: "utf8",
+            "flag": "a"
+          }, function (err) {
+            if (err)
+              result.send("Draft error");
+          });
+        }
+      }
+      cb(null);
+    }
     var msg = JSON.parse(fs.readFileSync(path.join(_workingDir,oldmsg['uid']+".json")));
     oldmsg = _.pick(oldmsg,["uid", "to", "from", "subject", "date", "flags", "folder"]);
 
@@ -384,7 +405,7 @@ module.exports = (function() {
       'from':"me",
       'subject':draftMsg['Subject'],
       'date':new Date(dateNow).toString(),
-      'flags':"\\Draft",
+      'flags':"\\localDraft",
       'folder':3
     }
     var extendedMsg = JSON.parse(JSON.stringify(newmsg));

@@ -220,36 +220,25 @@ module.exports = (function() {
     */
     app.get('/email', function (req, res,next) {
       if (!authState) {
-        if(_emailAccessToken == null){
-          getTDXToken(function(TokenErr,accessToken){
-            if(TokenErr){
-              log(TokenErr);
-              timerEnabled = true;
-              setTimeout(authPollTimer,config.autoReconnectTimer);
-            }else{
-              _emailAccessToken = accessToken;
-              _sync = new syncdriver(emailconfig,_emailAccessToken);
-              _fileCache.setSyncHandler(_sync);
-              log('get /email token: '+_emailAccessToken);
-              _email.getInbox(_tdxAPI, function(err,ans){
-                if(err) {
-                  log(err);
-                  if(err == "NULL DATA")
-                    res.render("email",{messages:[],docNames:[]});
-                  else
-                    res.redirect("/");
-                } else{
-                  _cache.getAttachments(_emailAccessToken, function (error,docNames) {
-                    if(error)
-                      docNames = [];
-                    res.render("email", {messages: ans,docNames:docNames});
-                  })
-                }
-              })
-            }
-          });
-        }
-		} else res.render("auth");
+        _sync = new syncdriver(emailconfig,_emailAccessToken);
+        _fileCache.setSyncHandler(_sync);
+        log('get /email token: '+_emailAccessToken);
+        _email.getInbox(_tdxAPI, function(err,ans){
+          if(err) {
+            log(err);
+            if(err == "NULL DATA")
+              res.render("email",{messages:[],docNames:[]});
+            else
+              res.redirect("/");
+          } else{
+            _cache.getAttachments(_emailAccessToken, function (error,docNames) {
+              if(error)
+                docNames = [];
+              res.render("email", {messages: ans,docNames:docNames});
+            })
+          }
+        })
+      } else res.render("auth");
     });
 
     /*

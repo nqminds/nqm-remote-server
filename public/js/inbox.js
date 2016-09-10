@@ -8,13 +8,13 @@ console.log(gdocNames);
 
 //lodash underscore
 var _u = _.noConflict();
-for(var gDataIndex = 0; gDataIndex<gData.length;gDataIndex++){
-  if(gData[gDataIndex]['flags'].indexOf("\\Seen") === -1){
-    gData[gDataIndex]['from'] = "<b>"+gData[gDataIndex]["from"]+"<b>";
-    gData[gDataIndex]['subject'] = "<b>"+gData[gDataIndex]["subject"]+"<b>";
-    gData[gDataIndex]['date'] = "<b>"+gData[gDataIndex]["date"]+"<b>";
-  }
-}
+//for(var gDataIndex = 0; gDataIndex<gData.length;gDataIndex++){
+//  if(gData[gDataIndex]['flags'].indexOf("\\Seen") === -1){
+//    gData[gDataIndex]['from'] = "<b>"+gData[gDataIndex]["from"]+"<b>";
+//    gData[gDataIndex]['subject'] = "<b>"+gData[gDataIndex]["subject"]+"<b>";
+//    gData[gDataIndex]['date'] = "<b>"+gData[gDataIndex]["date"]+"<b>";
+//  }
+//}
 
 
 //global attachment docs variable
@@ -98,6 +98,7 @@ function saveDraft(){
       if(text == "draft error")
         webix.message('Save failed');
       else {
+        $$("popupwin").close();
         var this_msg = JSON.parse(text);
         var selItem = $$("$datatable1").getSelectedId(true);
 
@@ -105,13 +106,12 @@ function saveDraft(){
           $$("$datatable1").updateItem(selItem,this_msg);
         else {
           gData.push(this_msg);
-          $$("$datatable1").loadNext(-1,0);
+          $$("$datatable1").add(this_msg);
         }
 
         var selectedTree = $$("$tree1").getSelectedId();
         $$("$tree1").select(2);
         $$("$tree1").select(selectedTree);
-        $$("popupwin").close();
         webix.message('Draft saved successfully');
       }
     }
