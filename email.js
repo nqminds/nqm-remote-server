@@ -52,7 +52,6 @@ module.exports = (function() {
       }
       else{
         dictInbox[updateObj['uid']] = updateObj;
-
         try{
           fs.unlinkSync(path.join(_workingDir, "inbox.json"));
         } catch(err) {
@@ -171,6 +170,11 @@ module.exports = (function() {
   Inbox.prototype.getOneMail = function(mailUid,cb) {
     log('read filename is:'+mailUid);
     var mailObj = JSON.parse(fs.readFileSync(path.join(_workingDir,mailUid+'.json')));
+    if(mailObj["flags"].indexOf("\\Seen") === -1){
+      mailObj['flags'] += "\\Seen";
+      
+      updateLocal(mailObj,path.join(_workingDir,"inbox.json"));
+    }
     //log('read file result is:');
     //log(mailObj);
 
