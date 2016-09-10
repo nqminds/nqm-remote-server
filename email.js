@@ -55,13 +55,15 @@ module.exports = (function() {
         try{
           fs.unlinkSync(path.join(_workingDir, "inbox.json"));
         } catch(err) {
-          log("inbox.json deletion:"+err);
+          log("inbox.json updating:"+err);
         }
 
+        log('new dictInbox is:');
+        log(dictInbox);
         for (var key in dictInbox) {
-          fs.writeFile(path.join(_workingDir, "inbox.json"), JSON.stringify(dictInbox[key]) + "\r\n", {encoding:"utf8","flag":"a"},function (err) {
+          fs.writeFile(path.join(_workingDir, "inbox.json"), JSON.stringify(dictInbox[key]) + "\r\n", {encoding:"utf8",flag:"a"},function (err) {
             if (err)
-              result.send("Draft error");
+              result.send("inbox.json saving err");
           });
         }
 
@@ -150,6 +152,8 @@ module.exports = (function() {
             })
 
             if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
+              log('unseen mails are');
+              log(data_array[i]);
               data_array[i]['from'] = '<b>' + data_array[i]['from'] + '<b>';
               data_array[i]['date'] = '<b>' + data_array[i]['date'] + '<b>';
               data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '<b>';
@@ -171,13 +175,12 @@ module.exports = (function() {
     log('read filename is:'+mailUid);
     var mailObj = JSON.parse(fs.readFileSync(path.join(_workingDir,mailUid+'.json')));
     if(mailObj["flags"].indexOf("\\Seen") === -1){
-      mailObj['flags'] += "\\Seen";
-      
-      updateLocal(mailObj,path.join(_workingDir,"inbox.json"));
+      var newMailObj = _.pick(mailObj,["uid", "to", "from", "subject", "date", "flags", "folder"]);
+      mailObj['flags'] += ",\\Seen";
+      newMailObj['flags'] += ",\\Seen";
+      updateLocal(newMailObj,path.join(_workingDir,"inbox.json"));
+      fs.writeFileSync(path.join(_workingDir,newMailObj['uid']+".json"),JSON.stringify(newMailObj),{enconding:"utf8",flag:"w"});
     }
-    //log('read file result is:');
-    //log(mailObj);
-
     var mailparser = new MailParser({streamAttachments: true});
     mailparser.on("end", function (mail_object) {
       createFolder('attachments');
