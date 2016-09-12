@@ -22,7 +22,7 @@ module.exports = (function() {
 
   var bodyParser = require('body-parser');
   var _emaildriver = require("./email.js")
-  var emailconfig = null;
+  var appconfig = null;
   var _email = null;
   var _filedriver = require('./fileCache');
   var _fileCache = null;
@@ -45,7 +45,7 @@ module.exports = (function() {
       log(TokenObj.timestamp);
       if(Date.now()/1000-TokenObj.timestamp/1000<3590) {
         _tdxAccessToken = require('./' + tokenPath).token;
-        _sync = new syncdriver(emailconfig, _tdxAccessToken);
+        _sync = new syncdriver(appconfig, _tdxAccessToken);
       }
     }
   })
@@ -83,11 +83,11 @@ module.exports = (function() {
 	}
 
 	try{
-		emailconfig = require(path.join(_workingDir,config.userInboxConfigName));
+		appconfig = require(path.join(_workingDir,config.userInboxConfigName));
 		authState = false;
-		_fileCache = new _filedriver(emailconfig);
-		_tdxAPI =  (new (require("nqm-api-tdx"))(emailconfig));
-		_email =new _emaildriver(emailconfig, _workingDir);
+		_fileCache = new _filedriver(appconfig);
+		_tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
+		_email =new _emaildriver(appconfig, _workingDir);
 	} catch(err) {
 		authState = true;
 	}
@@ -101,14 +101,14 @@ module.exports = (function() {
     app.use(bodyParser.urlencoded({ extended: false }));
 
     function getTDXToken(callback){
-      _tdxAPI.authenticate(emailconfig.emailtable_token,emailconfig.emailtable_Pass,function(TokenErr,accessToken){
+      _tdxAPI.authenticate(appconfig.emailtable_token,appconfig.emailtable_Pass,function(TokenErr,accessToken){
         if(TokenErr) {
           log("token err"+TokenErr);
           callback(TokenErr, null);
         }
         else{
           //_emailAccessToken = accessToken;
-          //_sync = new syncdriver(emailconfig,_emailAccessToken);
+          //_sync = new syncdriver(appconfig,_emailAccessToken);
           callback(null,accessToken);
         }
       })
@@ -117,7 +117,7 @@ module.exports = (function() {
 
   	function authPollTimer() {
 		log("Retry email auth token.");
-		_tdxAPI.authenticate(emailconfig.emailtable_token, emailconfig.emailtable_Pass, function(imaperr, accessToken){
+		_tdxAPI.authenticate(appconfig.emailtable_token, appconfig.emailtable_Pass, function(imaperr, accessToken){
 			if (imaperr) {
 				setTimeout(authPollTimer,config.autoReconnectTimer);
 			} else {
@@ -125,14 +125,14 @@ module.exports = (function() {
 
 				timerEnabled = false;
 				_emailAccessToken = accessToken;
-        _sync = new syncdriver(emailconfig,_emailAccessToken);
+        _sync = new syncdriver(appconfig,_emailAccessToken);
 			}
 		});
   	}
 
     app.get('/', function (req, res) {
 		if (!timerEnabled && _emailAccessToken==null && !authState) {
-			_tdxAPI.authenticate(emailconfig.emailtable_token, emailconfig.emailtable_Pass, function(imaperr, accessToken){
+			_tdxAPI.authenticate(appconfig.emailtable_token, appconfig.emailtable_Pass, function(imaperr, accessToken){
 				if (imaperr) {
 					log(imaperr);
 					timerEnabled = true;
@@ -140,13 +140,13 @@ module.exports = (function() {
 				}
 
 				_emailAccessToken = accessToken;
-      			_sync = new syncdriver(emailconfig,_emailAccessToken);
+      			_sync = new syncdriver(appconfig,_emailAccessToken);
         		res.render("apps", { config: config });
 			});
 		} else if (timerEnabled && _emailAccessToken==null && !authState)
 				res.render("apps", { config: config });
 		else if (_emailAccessToken!=null && !authState) {
-				_sync = new syncdriver(emailconfig,_emailAccessToken);
+				_sync = new syncdriver(appconfig,_emailAccessToken);
                 res.render("apps", { config: config });
 		} else if (authState) {
 			res.render("auth");
@@ -169,11 +169,11 @@ module.exports = (function() {
 										log(ferr);
 										res.render("auth");
 									} else {
-										emailconfig = data.data[0];
+										appconfig = data.data[0];
 										authState = false;
-            							_fileCache = new _filedriver(emailconfig);
-            							_tdxAPI =  (new (require("nqm-api-tdx"))(emailconfig));
-            							_email = new _emaildriver(emailconfig, _workingDir);
+            							_fileCache = new _filedriver(appconfig);
+            							_tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
+            							_email = new _emaildriver(appconfig, _workingDir);
 										res.redirect("/");
 									}
 								});
@@ -194,7 +194,7 @@ module.exports = (function() {
         _subscriptionManager.setAccessToken(q.access_token);
         response.writeHead(301, {Location: config.hostURL});
 
-        _sync = new syncdriver(emailconfig,_emailAccessToken);
+        _sync = new syncdriver(appconfig,_emailAccessToken);
         var tdxTokenObj = {
           token:_emailAccessToken,
           timestamp:Date.now()
@@ -222,7 +222,7 @@ module.exports = (function() {
       if (!authState) {
         log('get API obj is');
         log(_tdxAPI);
-        _sync = new syncdriver(emailconfig,_tdxAPI['_accessToken']);
+        _sync = new syncdriver(appconfig,_tdxAPI['_accessToken']);
         _fileCache.setSyncHandler(_sync);
         _email.getInbox(_tdxAPI, function(err,ans){
           if(err) {
@@ -287,7 +287,7 @@ module.exports = (function() {
       //  "date":Date.now()
       //}
       //var sentObj = {
-      //  id:emailconfig.byodimapboxes_ID,
+      //  id:appconfig.byodimapboxes_ID,
       //  d:sentData
       //}
       //
