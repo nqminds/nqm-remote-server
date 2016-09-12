@@ -64,7 +64,7 @@ function send() {
     console.log(xmlHttpRequest);
     if(xmlHttpRequest.readyState == 4 && xmlHttpRequest.status == 200){
       $$('popupwin').close();
-      if(this_message['folder'] == 3){
+      if (this_message != undefined && this_message['folder'] == 3) {
         this_message['folder'] = 2;
         this_message['flags'] = "\\Sent";
         var newData = $$('$datatable1');
@@ -76,7 +76,6 @@ function send() {
         $$("$tree1").select(selectedTree);
 
       }
-      else if(this_message)
       if(text === 'SENT') {
         webix.message('sent success', null, 20);
       }
@@ -231,7 +230,7 @@ var contentUI = {rows:[
             hidden:true
           },
           {},{},{},
-          {view:"label", template: "<div style='text-align: right;'>toby.ealden</div>" },
+          {view:"label", template: "<div style='text-align: right;'>"+appUserName+"</div>" },
           {view:"icon", icon:"user", click: onUserClick },
           {view:"icon", icon:"cog",popup:"setwindow"}
         ]

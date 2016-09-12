@@ -83,7 +83,7 @@ module.exports = (function() {
 	}
 
 	try{
-		appconfig = require(path.join(_workingDir,config.userInboxConfigName));
+		appconfig = require(path.join(_workingDir,config.userAppConfigName));
 		authState = false;
 		_fileCache = new _filedriver(appconfig,_workingDir);
 		_tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
@@ -141,13 +141,14 @@ module.exports = (function() {
 
 				_emailAccessToken = accessToken;
       			_sync = new syncdriver(appconfig,_emailAccessToken);
-        		res.render("apps", { config: config });
+            log('username is ',appconfig.userName);
+        		res.render("apps", { config: config, username:appconfig.userName});
 			});
 		} else if (timerEnabled && _emailAccessToken==null && !authState)
-				res.render("apps", { config: config });
+				res.render("apps", { config: config,username:appconfig.userName});
 		else if (_emailAccessToken!=null && !authState) {
 				_sync = new syncdriver(appconfig,_emailAccessToken);
-                res.render("apps", { config: config });
+                res.render("apps", { config: config,username:appconfig.userName});
 		} else if (authState) {
 			res.render("auth");
 		}
@@ -164,7 +165,7 @@ module.exports = (function() {
 						else {
 							if (!data.data.length) res.render("auth");
 							else {
-								fs.writeFile(path.join(_workingDir,config.userInboxConfigName), JSON.stringify(data.data[0]), function(ferr){
+								fs.writeFile(path.join(_workingDir,config.userAppConfigName), JSON.stringify(data.data[0]), function(ferr){
 									if (ferr) {
 										log(ferr);
 										res.render("auth");
@@ -235,7 +236,7 @@ module.exports = (function() {
             _cache.getAttachments(_tdxAPI['_accessToken'], function (error,docNames) {
               if(error)
                 docNames = [];
-              res.render("email", {messages: ans,docNames:docNames});
+              res.render("email", {messages: ans,docNames:docNames,username:appconfig.userName});
             })
           }
         })

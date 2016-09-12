@@ -14,7 +14,7 @@
   "nodePath": "",
   "authServerURL": "https://tdx.nqminds.com/auth",
   "userHomeDirName":".SECD",
-  "userInboxConfigName":"config_inbox.json",
+  "userAppConfigName":"configapp.json",
   "authtable_token":"SJ-FCSkkn",
   "authtable_Pass":"1234554321",
   "authtable_ID":"rygveNyy3",

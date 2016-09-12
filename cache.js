@@ -123,7 +123,8 @@ exports.getAttachments = function(token,cb){
   createFolder(attachmentPath);
   var docs = getDocs();
   console.log(docs);
-  if(docs.error != null || docs.errors == 'null'){
+  if(docs.error != "null"){
+
     console.log('get IVAN doc error');
     cb(docs.error,null);
   }
