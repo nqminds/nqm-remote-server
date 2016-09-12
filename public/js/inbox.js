@@ -64,7 +64,7 @@ function send() {
     console.log(xmlHttpRequest);
     if(xmlHttpRequest.readyState == 4 && xmlHttpRequest.status == 200){
       $$('popupwin').close();
-      if(this_message['folder'] == 3){
+      if (this_message != undefined && this_message['folder'] == 3) {
         this_message['folder'] = 2;
         this_message['flags'] = "\\Sent";
         var newData = $$('$datatable1');
@@ -76,7 +76,6 @@ function send() {
         $$("$tree1").select(selectedTree);
 
       }
-      else if(this_message)
       if(text === 'SENT') {
         webix.message('sent success', null, 20);
       }
@@ -180,18 +179,20 @@ function findAttachment(msguid){
 }
 var gridtable = {
     css:'table',
-	container:"thetable",
+    container:"thetable",
     view:"datatable",css: "rounded_top", scrollX:false,
     columns:[
       { id:"ch1", header:{ content:"masterCheckbox" }, template:"{common.checkbox()}",checkValue:'on', uncheckValue:'off', css:"center", width: 40 },
       { id:"from", width: 250, header:"From" },
       { id:"subject", header:"Subject", fillspace:true },
-      { id:"date", header:"Date", width: 150, sort:sortByDate}
+      { id:"date", header:"Date", width: 150, format:function(value){
+        return new Date(value);
+      }}
     ],
     select:"row",
     pager:{
       id:"pagerA",
-      size:5,
+      size:8,
       group:10,
       apiOnly:true
     },
@@ -229,7 +230,7 @@ var contentUI = {rows:[
             hidden:true
           },
           {},{},{},
-          {view:"label", template: "<div style='text-align: right;'>toby.ealden</div>" },
+          {view:"label", template: "<div style='text-align: right;'>"+appUserName+"</div>" },
           {view:"icon", icon:"user", click: onUserClick },
           {view:"icon", icon:"cog",popup:"setwindow"}
         ]
@@ -490,6 +491,11 @@ webix.ready(function() {
     return obj.folder == filter.id;
   });
   $$("$tree1").select(1);
+
+  /*sort date*/
+  $$("$datatable1").sort('date',"desc","date");
+  $$("$datatable1").markSorting("date","desc");
+  /**/
 
   /*single click on row to view the HTMl content
   * */

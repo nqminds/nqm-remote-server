@@ -22,11 +22,12 @@ module.exports = (function(){
   };
   /*-------------------------- send email script ---------------------*/
   function sendEmail(sentArray,cb){
+    log('email user address is',this.smtpLogin);
     var transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
-        user: 'byod23145842@gmail.com', // Your email id
-        pass: 'Zg3NgLqRZEhr' // Your password
+        user: this.smtpLogin, // Your email id
+        pass: this.smtpPass // Your password
       }
     });
     _.forEach(sentArray,function(element){
@@ -98,9 +99,10 @@ module.exports = (function(){
   }
 
   /*--------------------------- end add data funciton-------------------------*/
-  function HTTPSync(config,tdxAPI){
+  function HTTPSync(config,tdxAPI,appconfig){
     this._config = config;
     this._tdxAPI = tdxAPI;
+    this._appconfig = appconfig;
   }
   HTTPSync.prototype.sendData = function(dataId,dataIn,cb){
     var self = this;
@@ -146,7 +148,7 @@ module.exports = (function(){
     log('deleted obj is: ');
     log(updateData.payload);
 
-    sendEmail(upsertData.payload,function(err,ans){
+    sendEmail.call(upsertData.payload,function(err,ans){
       if(err) {
         log(err)
         cb(err, null)
