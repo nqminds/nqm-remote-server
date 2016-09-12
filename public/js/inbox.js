@@ -180,18 +180,20 @@ function findAttachment(msguid){
 }
 var gridtable = {
     css:'table',
-	container:"thetable",
+    container:"thetable",
     view:"datatable",css: "rounded_top", scrollX:false,
     columns:[
       { id:"ch1", header:{ content:"masterCheckbox" }, template:"{common.checkbox()}",checkValue:'on', uncheckValue:'off', css:"center", width: 40 },
       { id:"from", width: 250, header:"From" },
       { id:"subject", header:"Subject", fillspace:true },
-      { id:"date", header:"Date", width: 150, sort:sortByDate}
+      { id:"date", header:"Date", width: 150, format:function(value){
+        return new Date(value);
+      }}
     ],
     select:"row",
     pager:{
       id:"pagerA",
-      size:5,
+      size:8,
       group:10,
       apiOnly:true
     },
@@ -490,6 +492,11 @@ webix.ready(function() {
     return obj.folder == filter.id;
   });
   $$("$tree1").select(1);
+
+  /*sort date*/
+  $$("$datatable1").sort('date',"desc","date");
+  $$("$datatable1").markSorting("date","desc");
+  /**/
 
   /*single click on row to view the HTMl content
   * */

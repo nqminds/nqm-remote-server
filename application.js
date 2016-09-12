@@ -85,7 +85,7 @@ module.exports = (function() {
 	try{
 		appconfig = require(path.join(_workingDir,config.userInboxConfigName));
 		authState = false;
-		_fileCache = new _filedriver(appconfig);
+		_fileCache = new _filedriver(appconfig,_workingDir);
 		_tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
 		_email =new _emaildriver(appconfig, _workingDir);
 	} catch(err) {
@@ -171,7 +171,7 @@ module.exports = (function() {
 									} else {
 										appconfig = data.data[0];
 										authState = false;
-            							_fileCache = new _filedriver(appconfig);
+            							_fileCache = new _filedriver(appconfig,_workingDir);
             							_tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
             							_email = new _emaildriver(appconfig, _workingDir);
 										res.redirect("/");

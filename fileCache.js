@@ -8,11 +8,11 @@ module.exports = (function() {
   var archivePath = "archive";
   var fs = require("fs");
   var path = require("path");
-  var dirname = path.dirname(require.main.filename);
   var _ = require("lodash");
+  var _workingDir = null;
 
   function createFolder(name) {
-    var folderPath = path.join(dirname, name);
+    var folderPath = path.join(_workingDir, name);
     try {
       if (!fs.existsSync(folderPath)) {
         fs.mkdirSync(folderPath);
@@ -26,8 +26,8 @@ module.exports = (function() {
     var pendingFile, transmitFile;
     do {
       this._pendingFileCount++;
-      pendingFile = path.join(dirname, this._config.rootPath, pendingPath, this._pendingFileCount + '.log');
-      transmitFile = path.join(dirname, this._config.rootPath, transmitPath, this._pendingFileCount + '.log');
+      pendingFile = path.join(_workingDir, this._config.rootPath, pendingPath, this._pendingFileCount + '.log');
+      transmitFile = path.join(_workingDir, this._config.rootPath, transmitPath, this._pendingFileCount + '.log');
     } while(fs.existsSync(pendingFile) || fs.existsSync(transmitFile));
 
     return pendingFile;
@@ -36,18 +36,18 @@ module.exports = (function() {
   function movePendingFiles(rootPath) {
     // Clear pending folder.
     console.log("moving pending logs to transmit folder");
-    var pendingFiles = fs.readdirSync(path.join(dirname, rootPath, pendingPath));
+    var pendingFiles = fs.readdirSync(path.join(_workingDir, rootPath, pendingPath));
 
     // Move files from pending to transmit folder.
     for (var i = 0, len = pendingFiles.length; i < len; i++) {
-      var pendingFile = path.join(dirname, rootPath, pendingPath, pendingFiles[i]);
+      var pendingFile = path.join(_workingDir, rootPath, pendingPath, pendingFiles[i]);
       pendingToTransmit(rootPath,pendingFile);
     }
   }
 
   function pendingToTransmit(rootPath, file) {
     var fileOnly = path.basename(file);
-    var transmitFile = path.join(dirname,rootPath, transmitPath, fileOnly);
+    var transmitFile = path.join(_workingDir,rootPath, transmitPath, fileOnly);
     try {
       if (!fs.existsSync(transmitFile)) {
         fs.renameSync(file,transmitFile);
@@ -148,7 +148,7 @@ module.exports = (function() {
 
 
     self._transmitFiles = [];
-    var directory = path.join(dirname, self._config.rootPath, transmitPath);
+    var directory = path.join(_workingDir, self._config.rootPath, transmitPath);
 
     var transmitDirectory = function(directory, err, files) {
       var transmitCandidates = files.map(function(f) { return path.join(directory, f); });
@@ -221,7 +221,7 @@ module.exports = (function() {
     });
   }
 
-  function FileCache(config) {
+  function FileCache(config,workingDir) {
     this._config = config;
     this._sync = null;
     this._transmitTimer = 0;
@@ -229,6 +229,7 @@ module.exports = (function() {
     this._pendingPacketCount = 0;
     this._transmitFiles = [];
     this._timeoutTimer = 0;
+    _workingDir = workingDir;
 
     this._config.rootPath = this._config.rootPath || "";
     createFolder(this._config.rootPath);
@@ -249,12 +250,12 @@ module.exports = (function() {
 
     // Add packet to archive file.
     if (this._config.archive) {
-      var archiveFile = path.join(dirname, this._config.rootPath, archivePath,'store.json');
+      var archiveFile = path.join(_workingDir, this._config.rootPath, archivePath,'store.json');
       fs.appendFileSync(archiveFile,data + "\n");
     }
 
     // Add packet to pending file
-    var pendingFile = path.join(dirname, this._config.rootPath, pendingPath, this._pendingFileCount + '.log');
+    var pendingFile = path.join(_workingDir, this._config.rootPath, pendingPath, this._pendingFileCount + '.log');
     try{
       fs.appendFileSync(pendingFile,data);
     }catch(e){
