@@ -197,6 +197,7 @@ module.exports = (function() {
       else if(mail_object.html !== undefined){
         mailObj['text'] = mail_object.html;
       }
+      mailObj['attachments'] = mail_object['attachments'];
       //log(mailObj['text']);
       cb(mailObj);
     });
@@ -262,6 +263,24 @@ module.exports = (function() {
     })
 
   }
+
+  /*-------------------------- refresh function --------------------------*/
+
+  Inbox.prototype.getnewInbox = function(tdxAPI,cb) {
+    log('get new inbox');
+    var self = this;
+    tdxAPI.query("datasets/" + self._config.emailtable_ID + "/data",{flags:{$not:/\\Seen*/}},null,null,function(err,ansData){
+      if(err){
+        log(err);
+        cb(err,null);
+      }else{
+        log(ansData);
+        cb(null,ansData);
+      }
+    })
+  }
+
+  /*--------------------------- end of refresh function -------------------*/
   /*--------------------------- update function ---------------------------*/
   Inbox.prototype.update = function(oldmsg,fileCache,cb){
     var self = this;

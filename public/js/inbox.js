@@ -8,14 +8,6 @@ console.log(gdocNames);
 
 //lodash underscore
 var _u = _.noConflict();
-//for(var gDataIndex = 0; gDataIndex<gData.length;gDataIndex++){
-//  if(gData[gDataIndex]['flags'].indexOf("\\Seen") === -1){
-//    gData[gDataIndex]['from'] = "<b>"+gData[gDataIndex]["from"]+"<b>";
-//    gData[gDataIndex]['subject'] = "<b>"+gData[gDataIndex]["subject"]+"<b>";
-//    gData[gDataIndex]['date'] = "<b>"+gData[gDataIndex]["date"]+"<b>";
-//  }
-//}
-
 
 //global attachment docs variable
 var gAttachDoc = [];
@@ -31,12 +23,6 @@ function onEmailClick(){
 var onUserClick = function() {
   console.log('logout');
   window.location.replace("/logout");
-}
-function sortByDate(a,b){
-  var aTime = Date.parse(a);
-  var bTime = Date.parse(b);
-
-  return aTime>bTime?1:(aTime<bTime?-1:0);
 }
 function send() {
   var this_uid,this_message;
@@ -185,9 +171,9 @@ var gridtable = {
       { id:"ch1", header:{ content:"masterCheckbox" }, template:"{common.checkbox()}",checkValue:'on', uncheckValue:'off', css:"center", width: 40 },
       { id:"from", width: 250, header:"From" },
       { id:"subject", header:"Subject", fillspace:true },
-      { id:"date", header:"Date", width: 150, format:function(value){
+      { id:"date",header:"Date", width: 150, format:function(value){
         return new Date(value);
-      }}
+      },sort:"date"}
     ],
     select:"row",
     pager:{
@@ -478,7 +464,8 @@ function setupDocLoad() {
   }
 }
 function replaceBold(boldStr){
-  return boldStr.replace(/<b>/g, "")
+  boldStr.replace(/<b>/g, "");
+  boldStr.replace(/<\/b>/g,"");
 }
 /*--------------------- END attachment popup ------------------------------------------------*/
 webix.ready(function() {
@@ -492,9 +479,11 @@ webix.ready(function() {
   });
   $$("$tree1").select(1);
 
-  /*sort date*/
-  $$("$datatable1").sort('date',"desc","date");
-  $$("$datatable1").markSorting("date","desc");
+  /*refresh every 5 seconds*/
+  //setInterval(function(){
+  //  webix.ajax().get('/refresh',null,"GET");
+  //}, 5000);
+
   /**/
 
   /*single click on row to view the HTMl content
@@ -518,8 +507,23 @@ webix.ready(function() {
     }
     webix.ajax().post("/message?id="+this_content['uid'],function(text,data,XmlHttpRequest){
       if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200) {
-        var contentHtml = JSON.parse(text)['text'];
+        var messageObj = JSON.parse(text);
+        var contentHtml = messageObj['text'];
+        console.log(messageObj['attachments']);
+        if(messageObj['attachments'] != undefined) {
+          if (messageObj['attachments'].length > 0) {
+            var spaces = "<br/><br/><br/>";
+            var icon = "";
+            for (var i = 0; i < messageObj['attachments'].length; i++) {
+              icon += "<div name=" + messageObj['attachments'][i]['generatedFileName'] + ">";
+              icon += "<span class='webix_icon attachment-icon fa-file-archive-o fa-4x'>";
+              icon += messageObj['attachments'][i]['generatedFileName'] + "</span></div><br/>";
+            }
+            contentHtml += spaces + icon;
+          }
+        }
         $$("mailview").setHTML(contentHtml);
+        setupDocLoad();
       }
     })
 
