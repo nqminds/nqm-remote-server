@@ -242,6 +242,16 @@ module.exports = (function() {
       } else res.render("auth");
     });
 
+	app.get('/newmail', function(req, res, next){
+		_tdxAPI.query("datasets/" + appconfig.emailtable_ID + "/data", {flags:{$not:{$regex:'/*Seen'}}}, null, null, function (qerr, data) {
+			if (qerr) log(qerr)
+			else{
+				log(data);
+				res.redirect("/");
+			}	
+		});
+	});
+
     /*
     * ----------------send email--------------------
     */
