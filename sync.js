@@ -98,9 +98,9 @@ module.exports = (function(){
   }
 
   /*--------------------------- end add data funciton-------------------------*/
-  function HTTPSync(config,tdxtoken){
+  function HTTPSync(config,tdxAPI){
     this._config = config;
-    this._token = tdxtoken;
+    this._tdxAPI = tdxAPI;
   }
   HTTPSync.prototype.sendData = function(dataId,dataIn,cb){
     var self = this;
@@ -154,7 +154,7 @@ module.exports = (function(){
       else{
         log('noerr');
         addans = 1;
-        upsertDataBulk(self._config.commandHost,self._token,updateData,function(err,response){
+        upsertDataBulk(self._config.commandHost,self._tdxAPI,updateData,function(err,response){
           if(err){
             log(err);
             cb(err,null);

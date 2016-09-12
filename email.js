@@ -150,13 +150,13 @@ module.exports = (function() {
               }
             })
 
-            //if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
-            //  log('unseen mails are');
-            //  log(data_array[i]);
-            //  data_array[i]['from'] = '<b>' + data_array[i]['from'] + '<b>';
-            //  data_array[i]['date'] = '<b>' + data_array[i]['date'] + '<b>';
-            //  data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '<b>';
-            //}
+            if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
+              log('unseen mails are');
+              log(data_array[i]);
+              data_array[i]['from'] = '<b>' + data_array[i]['from'] + '</b>';
+              data_array[i]['date'] = '<b>' + data_array[i]['date'] + '</b>';
+              data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '</b>';
+            }
           }
         }
         else{
@@ -246,11 +246,11 @@ module.exports = (function() {
             var oldMessageObj = null;
             oldMessageObj = JSON.parse(oldMessages_array[i]);
             dictInbox[oldMessageObj['uid']] = oldMessageObj;
-            //if (oldMessageObj['flags'].indexOf("\\Seen") === -1) {
-            //  oldMessageObj['from'] = '<b>' + oldMessageObj['from'] + '<b>';
-            //  oldMessageObj['date'] = '<b>' + oldMessageObj['date'] + '<b>';
-            //  oldMessageObj['subject'] = '<b>' + oldMessageObj['subject'] + '<b>';
-            //}
+            if (oldMessageObj['flags'].indexOf("\\Seen") === -1) {
+              oldMessageObj['from'] = '<b>' + oldMessageObj['from'] + '</b>';
+              oldMessageObj['date'] = '<b>' + oldMessageObj['date'] + '</b>';
+              oldMessageObj['subject'] = '<b>' + oldMessageObj['subject'] + '</b>';
+            }
             ansMessages_array.push(oldMessageObj);
           }
 

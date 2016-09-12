@@ -220,9 +220,10 @@ module.exports = (function() {
     */
     app.get('/email', function (req, res,next) {
       if (!authState) {
-        _sync = new syncdriver(emailconfig,_emailAccessToken);
+        log('get API obj is');
+        log(_tdxAPI);
+        _sync = new syncdriver(emailconfig,_tdxAPI['_accessToken']);
         _fileCache.setSyncHandler(_sync);
-        log('get /email token: '+_emailAccessToken);
         _email.getInbox(_tdxAPI, function(err,ans){
           if(err) {
             log(err);
@@ -231,7 +232,7 @@ module.exports = (function() {
             else
               res.redirect("/");
           } else{
-            _cache.getAttachments(_emailAccessToken, function (error,docNames) {
+            _cache.getAttachments(_tdxAPI['_accessToken'], function (error,docNames) {
               if(error)
                 docNames = [];
               res.render("email", {messages: ans,docNames:docNames});
