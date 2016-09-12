@@ -51,7 +51,9 @@ module.exports = (function() {
         error = err;
       }
       else{
-        dictInbox[updateObj['uid']] = updateObj;
+        if(updateObj !== null) {
+          dictInbox[updateObj['uid']] = updateObj;
+        }
         try{
           fs.unlinkSync(path.join(_workingDir, "inbox.json"));
         } catch(err) {
@@ -208,7 +210,6 @@ module.exports = (function() {
   Inbox.prototype.getInbox = function(tdxAPI,cb) {
     var self = this;
   	var localDrafts = [];
-    log('getInbox function');
 
     try{
       var drafts = fs.readFileSync(path.join(_workingDir,'drafts.json')).toString().split("\r\n");
@@ -269,15 +270,25 @@ module.exports = (function() {
   Inbox.prototype.getnewInbox = function(tdxAPI,cb) {
     log('get new inbox');
     var self = this;
-    tdxAPI.query("datasets/" + self._config.emailtable_ID + "/data",{flags:{$not:/\\Seen*/}},null,null,function(err,ansData){
-      if(err){
-        log(err);
-        cb(err,null);
-      }else{
-        log(ansData);
-        cb(null,ansData);
+    var new_array = [];
+    tdxAPI.query("datasets/" + self._config.emailtable_ID + "/data", {flags:{$regex:'^((?!\Seen).)*$'}}, null, null, function (qerr, data) {
+      if (qerr) {
+        cb(qerr,null);
       }
-    })
+      else{
+        var unseen_array = data.data;
+        for(var i=0;i<unseen_array.length;i++){
+          if(!_.has(dictInbox,unseen_array[i]['uid'])){
+            var newmessageObj = _.pick(unseen_array[i],["uid", "to", "from", "subject", "date", "flags", "folder"]);
+            fs.writeFileSync(path.join(_workingDir,newmessageObj['uid']+".json"),JSON.stringify(newmessageObj),{enconding:"utf8",flag:"w"});
+            new_array.push(newmessageObj);
+            dictInbox[unseen_array[i]['uid']] = newmessageObj;
+          }
+        }
+        updateLocal(null,'inbox.json');
+        cb(new_array,null)
+      }
+    });
   }
 
   /*--------------------------- end of refresh function -------------------*/

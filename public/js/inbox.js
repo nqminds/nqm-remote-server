@@ -480,9 +480,9 @@ webix.ready(function() {
   $$("$tree1").select(1);
 
   /*refresh every 5 seconds*/
-  //setInterval(function(){
-  //  webix.ajax().get('/refresh',null,"GET");
-  //}, 5000);
+  setInterval(function(){
+    webix.ajax().get('/newmail',null,"GET");
+  }, 5000);
 
   /**/
 

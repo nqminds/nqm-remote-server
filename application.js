@@ -242,23 +242,19 @@ module.exports = (function() {
         })
       } else res.render("auth");
     });
-
-    app.get('/refresh',function(req,res,next){
-      if (!authState) {
-        _sync = new syncdriver(appconfig,_tdxAPI['_accessToken']);
-        _fileCache.setSyncHandler(_sync);
-        _email.getnewInbox(_tdxAPI, function(err,ans){
-          if(err){
-            res.redirect("/email");
-          }
-          else{
-            log('no err refresh');
-            log(ans);
-            res.send(ans);
-          }
-        })
-      } else res.render("auth");
+/*----------------------------------------------- refresh ----------------------------------------------------------*/
+	app.get('/newmail', function(req, res, next){
+    log('get newmail');
+    _email.getnewInbox(_tdxAPI,function(qerr,newmessages){
+      if(qerr){
+        log(qerr);
+        res.redirect('/');
+      }else{
+        res.send(newmessages);
+      }
     })
+
+	});
     /*
     * ----------------send email--------------------
     */
