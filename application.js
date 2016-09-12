@@ -83,7 +83,7 @@ module.exports = (function() {
 	}
 
 	try{
-		appconfig = require(path.join(_workingDir,config.userInboxConfigName));
+		appconfig = require(path.join(_workingDir,config.userAppConfigName));
 		authState = false;
 		_fileCache = new _filedriver(appconfig);
 		_tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
@@ -164,7 +164,7 @@ module.exports = (function() {
 						else {
 							if (!data.data.length) res.render("auth");
 							else {
-								fs.writeFile(path.join(_workingDir,config.userInboxConfigName), JSON.stringify(data.data[0]), function(ferr){
+								fs.writeFile(path.join(_workingDir,config.userAppConfigName), JSON.stringify(data.data[0]), function(ferr){
 									if (ferr) {
 										log(ferr);
 										res.render("auth");

@@ -79,7 +79,7 @@ webix.ready(function() {
             hidden:true
           },
           {},{},
-          {view:"label", template: "<div style='text-align: right;'>toby.ealden</div>" },
+          {view:"label", id:"loginname", template: "<div style='text-align: right;'>Alex</div>" },
           {view:"icon", icon:"user"},
           {view:"icon", icon:"cog",popup:"setwindow"}
         ]
