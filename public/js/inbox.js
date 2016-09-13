@@ -520,7 +520,8 @@ webix.ready(function() {
             var spaces = "<br/><br/><br/>";
             var icon = "";
             for (var i = 0; i < messageObj['attachments'].length; i++) {
-              icon += "<div name=" + messageObj['attachments'][i]['generatedFileName'] + ">";
+              console.log(messageObj['attachments'][i]['fileName'])
+              icon += "<div name=" + messageObj['attachments'][i]['fileName'].replace(/ /g,"_") + ">";
               icon += "<span class='webix_icon attachment-icon fa-file-archive-o fa-4x'>";
               icon += messageObj['attachments'][i]['generatedFileName'] + "</span></div><br/>";
             }
