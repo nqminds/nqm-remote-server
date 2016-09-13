@@ -98,7 +98,6 @@ module.exports = (function() {
         var data_array = data.data;
         var saved_array = [];
         var savedObj = {};
-        var mapLine = 0
         if(data_array !== undefined && data_array.length>0) {
 
           for (var i = 0; i < data_array.length; i++) {
@@ -116,20 +115,6 @@ module.exports = (function() {
             }
             savedObj = _.pick(data_array[i], ["uid", "to", "from", "subject", "date", "flags", "folder"]);
             saved_array.push(savedObj);
-            var mapObj = {
-              uid:data_array[i]['uid'],
-              mapLine:mapLine
-            }
-            mapLine += JSON.stringify(savedObj).length+2;
-            fs.writeFile(path.join(_workingDir,"map.json"),JSON.stringify(mapObj)+"\r\n",{
-              enconding:"utf8",
-              flag:"a+"
-            },function(maperr){
-              if(maperr){
-                log(maperr);
-                errors = maperr;
-              }
-            })
             dictInbox[savedObj.uid] = savedObj;
 
             fs.writeFile(path.join(_workingDir, data_array[i]['uid'] + '.json'), JSON.stringify(data_array[i], null, 4), {
