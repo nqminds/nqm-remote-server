@@ -498,8 +498,8 @@ webix.ready(function() {
           webix.message('new mails comming!');
         }
         var selectedTree = $$("$tree1").getSelectedId();
-        $$("$tree1").select(3);
-        $$("$tree1").select(selectedTree);
+        //$$("$tree1").select(3);
+        //$$("$tree1").select(selectedTree);
       }
     })
   }, 10000);

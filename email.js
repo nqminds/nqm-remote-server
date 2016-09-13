@@ -175,6 +175,8 @@ module.exports = (function() {
         id: self._config.emailtable_ID,
         d: mailObj
       }
+      log('update filecache obj is:');
+      log(updateObj);
       fileCache.cacheThis(updateObj, function (err) {
         if (err) {
           cb(err);
@@ -291,6 +293,9 @@ module.exports = (function() {
             fs.writeFileSync(path.join(_workingDir,newmessageObj['uid']+".json"),JSON.stringify(newmessageObj),{enconding:"utf8",flag:"w"});
             new_array.push(newmessageObj);
             dictInbox[unseen_array[i]['uid']] = newmessageObj;
+            newmessageObj['from'] = "<b>"+newmessageObj['from']+"<b>";
+            newmessageObj['subject'] = "<b>"+newmessageObj['subject']+"<b>";
+            newmessageObj['date'] = "<b>"+newmessageObj['date']+"<b>";
           }
         }
         if(flag == true) {
