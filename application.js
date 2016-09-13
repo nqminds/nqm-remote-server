@@ -236,7 +236,7 @@ module.exports = (function() {
             _cache.getAttachments(_tdxAPI['_accessToken'], function (error,docNames) {
               if(error)
                 docNames = [];
-              res.render("email", {messages: ans,docNames:docNames,username:appconfig.userName});
+              res.render("email", {messages: ans,docNames:docNames,username:appconfig.userName,newmessages:[]});
             })
           }
         })

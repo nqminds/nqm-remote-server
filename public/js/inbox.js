@@ -5,6 +5,7 @@
 
 console.log(gData);
 console.log(gdocNames);
+gData.concat(newData);
 
 //lodash underscore
 var _u = _.noConflict();
@@ -171,7 +172,10 @@ var gridtable = {
       { id:"ch1", header:{ content:"masterCheckbox" }, template:"{common.checkbox()}",checkValue:'on', uncheckValue:'off', css:"center", width: 40 },
       { id:"from", width: 250, header:"From" },
       { id:"subject", header:"Subject", fillspace:true },
-      { id:"date",header:"Date", width: 150, format:function(value){
+      { id:"date",header:"Date", width: 150,format:function(value){
+        if(value.indexOf("<b>") !== -1 || value.indexOf("<\/b>") !== -1){
+          value = replaceBold(value);
+        }
         return new Date(value);
       },sort:"date"}
     ],
@@ -464,8 +468,9 @@ function setupDocLoad() {
   }
 }
 function replaceBold(boldStr){
-  boldStr.replace(/<b>/g, "");
-  boldStr.replace(/<\/b>/g,"");
+  var substr1 = boldStr.replace(/<b>/g, "");
+  var substr2 = substr1.replace(/<\/b>/g,"");
+  return substr2;
 }
 /*--------------------- END attachment popup ------------------------------------------------*/
 webix.ready(function() {
