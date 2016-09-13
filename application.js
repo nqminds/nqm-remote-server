@@ -287,19 +287,23 @@ module.exports = (function() {
       } else res.render("auth");
     });
 /*----------------------------------------------- refresh ----------------------------------------------------------*/
-	app.get('/newmail', function(req, res, next){
+	app.post('/refresh', function(req, res, next){
     	log('get newmail');
-
     	if (_tdxAPI !== null) {
 			_email.getnewInbox(_tdxAPI,function(qerr,newmessages){
     			if(qerr){
         			log(qerr);
         			res.redirect('/');
-      			}else
-        			res.send(newmessages);
+      			}else {
+            log('get new messages are');
+            log(newmessages);
+            res.send(newmessages);
+          }
     		});
-		} else
-			res.redirect('/');
+		} else {
+        log('_tdxAPI error');
+        res.redirect('/');
+      }
 	});
     /*
     * ----------------send email--------------------

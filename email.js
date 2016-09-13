@@ -122,6 +122,7 @@ module.exports = (function() {
               flag: "w"
             }, function (save_err) {
               if (save_err) {
+                log('file save err');
                 log(save_err);
                 errors = save_err;
               }
@@ -132,6 +133,7 @@ module.exports = (function() {
               flag: "a+"
             }, function (save_err) {
               if (save_err) {
+                log('inbox.json save err');
                 log(save_err);
                 errors = save_err;
               }
@@ -229,8 +231,10 @@ module.exports = (function() {
       if(err){
         log('get from TBX');
         getTBXtable.call(self,tdxAPI,function(qerr,data_array){
-          if(qerr)
-            cb(qerr,null);
+          if(qerr) {
+            log(qerr);
+            cb(qerr, null);
+          }
           else{
             cb(null,data_array.concat(localDrafts));
           }
@@ -276,8 +280,10 @@ module.exports = (function() {
       if (qerr) {
         cb(qerr,null);
       }
-      else if (unseen_array !== undefined){
+      else if (data.data !== undefined){
         var unseen_array = data.data;
+        //log('unseen emails are');
+        //log(data.data);
         for(var i=0;i<unseen_array.length;i++){
           if(!_.has(dictInbox,unseen_array[i]['uid'])){
             flag = true;
@@ -287,11 +293,13 @@ module.exports = (function() {
             dictInbox[unseen_array[i]['uid']] = newmessageObj;
           }
         }
-        if(flag) {
-          updateLocal(null, 'inbox.json');
+        if(flag == true) {
+          log('updating inbox.json with refresh');
+          updateLocal(null, path.join(_workingDir,"inbox.json"));
         }
-        updateLocal(null,'inbox.json');
-        cb(new_array,null)
+        //log('unseen emails are');
+        //log(new_array)
+        cb(null,new_array);
       }
     });
   }

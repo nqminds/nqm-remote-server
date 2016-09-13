@@ -93,6 +93,7 @@ function saveDraft(){
           $$("$datatable1").updateItem(selItem,this_msg);
         else {
           gData.push(this_msg);
+          console.log(this_msg);
           $$("$datatable1").add(this_msg);
         }
 
@@ -182,7 +183,7 @@ var gridtable = {
     pager:{
       id:"pagerA",
       size:8,
-      group:10,
+      group:100,
       apiOnly:true
     },
     data:gData,
@@ -484,9 +485,24 @@ webix.ready(function() {
   $$("$tree1").select(1);
 
   /*refresh every 5 seconds*/
-  //setInterval(function(){
-  //  webix.ajax().get('/newmail',null,"GET");
-  //}, 5000);
+  setInterval(function(){
+    webix.ajax().post("/refresh",function(text,data,XmlHttpRequest){
+      if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200) {
+        var newmessages = JSON.parse(text);
+        if(newmessages.length>0){
+          for(var i=0;i<newmessages.length;i++){
+            gData.push(newmessages[i]);
+            console.log(newmessages[i]);
+            $$("$datatable1").add(newmessages[i]);
+          }
+          webix.message('new mails comming!');
+        }
+        var selectedTree = $$("$tree1").getSelectedId();
+        $$("$tree1").select(3);
+        $$("$tree1").select(selectedTree);
+      }
+    })
+  }, 10000);
 
   /**/
 
@@ -525,6 +541,7 @@ webix.ready(function() {
               icon += messageObj['attachments'][i]['generatedFileName'].replace(/ /g,"_") + "</span></div><br/>";
             }
             contentHtml += spaces + icon;
+
           }
         }
         $$("mailview").setHTML(contentHtml);
