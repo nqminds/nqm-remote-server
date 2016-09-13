@@ -138,7 +138,7 @@ module.exports = (function() {
             })
 
             if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
-              //log('unseen mails are');
+              //log('getoails are');
               //log(data_array[i]);
               data_array[i]['from'] = '<b>' + data_array[i]['from'] + '</b>';
               data_array[i]['date'] = '<b>' + data_array[i]['date'] + '</b>';
@@ -158,7 +158,9 @@ module.exports = (function() {
   }
   /*--------------------------- get One Mail mailparsered---------------------*/
   Inbox.prototype.getOneMail = function(mailUid,fileCache,cb) {
+    var self = this;
     log('read filename is:'+mailUid);
+
     var mailObj = JSON.parse(fs.readFileSync(path.join(_workingDir,mailUid+'.json')));
     if(mailObj["flags"].indexOf("\\Seen") === -1 && mailObj['flags'].indexOf("\\localDraft") === -1){
       var newMailObj = _.pick(mailObj,["uid", "to", "from", "subject", "date", "flags", "folder"]);
@@ -166,6 +168,16 @@ module.exports = (function() {
       newMailObj['flags'] += ",\\Seen";
       updateLocal(newMailObj,path.join(_workingDir,"inbox.json"));
       fs.writeFileSync(path.join(_workingDir,newMailObj['uid']+".json"),JSON.stringify(mailObj),{enconding:"utf8",flag:"w"});
+      mailObj['update'] = 1;
+      var updateObj = {
+        id: self._config.emailtable_ID,
+        d: mailObj
+      }
+      fileCache.cacheThis(updateObj, function (err) {
+        if (err) {
+          cb(err);
+        }
+      })
     }
 
     var mailparser = new MailParser();
