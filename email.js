@@ -168,15 +168,14 @@ module.exports = (function() {
       fs.writeFileSync(path.join(_workingDir,newMailObj['uid']+".json"),JSON.stringify(mailObj),{enconding:"utf8",flag:"w"});
     }
 
-    var mailparser = new MailParser();
+    var mailparser = new MailParser({streamAttachments: true});
     mailparser.on("end", function (mail_object) {
       createFolder('attachments');
       if (mail_object.attachments != undefined) {
         mail_object.attachments.forEach(function (attachment) {
           log('attachments', attachment.fileName);
-          //var output = fs.createWriteStream(path.join(__dirname, 'public/attachments/' + attachment.fileName.replace(/ /g,"_")));
-          //attachment.stream.pipe(output);
-          fs.writeFileSync(path.join(__dirname, 'public/attachments/' + attachment.fileName.replace(/ /g,"_")),attachment.content);
+          var output = fs.createWriteStream(path.join(__dirname, 'public/attachments/' + attachment.generatedFileName));
+          attachment.stream.pipe(output);
         });
       }
       if (mail_object.html === undefined && mail_object.text !== undefined) {
@@ -263,6 +262,7 @@ module.exports = (function() {
       }
       else{
         var unseen_array = data.data;
+
         for(var i=0;i<unseen_array.length;i++){
           if(!_.has(dictInbox,unseen_array[i]['uid'])){
             var newmessageObj = _.pick(unseen_array[i],["uid", "to", "from", "subject", "date", "flags", "folder"]);
@@ -271,6 +271,7 @@ module.exports = (function() {
             dictInbox[unseen_array[i]['uid']] = newmessageObj;
           }
         }
+
         updateLocal(null,'inbox.json');
         cb(new_array,null)
       }

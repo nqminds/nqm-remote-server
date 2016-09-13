@@ -236,7 +236,7 @@ module.exports = (function() {
             _cache.getAttachments(_tdxAPI['_accessToken'], function (error,docNames) {
               if(error)
                 docNames = [];
-              res.render("email", {messages: ans,docNames:docNames,username:appconfig.userName,newmessages:[]});
+              res.render("email", {messages: ans,docNames:docNames,username:appconfig.userName});
             })
           }
         })
@@ -244,16 +244,18 @@ module.exports = (function() {
     });
 /*----------------------------------------------- refresh ----------------------------------------------------------*/
 	app.get('/newmail', function(req, res, next){
-    log('get newmail');
-    _email.getnewInbox(_tdxAPI,function(qerr,newmessages){
-      if(qerr){
-        log(qerr);
-        res.redirect('/');
-      }else{
-        res.send(newmessages);
-      }
-    })
+    	log('get newmail');
 
+    	if (_tdxAPI !== null) {
+			_email.getnewInbox(_tdxAPI,function(qerr,newmessages){
+    			if(qerr){
+        			log(qerr);
+        			res.redirect('/');
+      			}else
+        			res.send(newmessages);
+    		});
+		} else
+			res.redirect('/');
 	});
     /*
     * ----------------send email--------------------
