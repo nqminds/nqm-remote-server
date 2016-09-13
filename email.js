@@ -257,6 +257,7 @@ module.exports = (function() {
     log('get new inbox');
     var self = this;
     var new_array = [];
+    var flag = false;
     tdxAPI.query("datasets/" + self._config.emailtable_ID + "/data", {flags:{$regex:'^((?!\Seen).)*$'}}, null, null, function (qerr, data) {
       if (qerr) {
         cb(qerr,null);
@@ -265,13 +266,16 @@ module.exports = (function() {
         var unseen_array = data.data;
         for(var i=0;i<unseen_array.length;i++){
           if(!_.has(dictInbox,unseen_array[i]['uid'])){
+            flag = true;
             var newmessageObj = _.pick(unseen_array[i],["uid", "to", "from", "subject", "date", "flags", "folder"]);
             fs.writeFileSync(path.join(_workingDir,newmessageObj['uid']+".json"),JSON.stringify(newmessageObj),{enconding:"utf8",flag:"w"});
             new_array.push(newmessageObj);
             dictInbox[unseen_array[i]['uid']] = newmessageObj;
           }
         }
-        updateLocal(null,'inbox.json');
+        if(flag) {
+          updateLocal(null, 'inbox.json');
+        }
         cb(new_array,null)
       }
     });

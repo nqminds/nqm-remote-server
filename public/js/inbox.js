@@ -5,7 +5,6 @@
 
 console.log(gData);
 console.log(gdocNames);
-gData.concat(newData);
 
 //lodash underscore
 var _u = _.noConflict();
@@ -523,7 +522,7 @@ webix.ready(function() {
               console.log(messageObj['attachments'][i]['fileName'])
               icon += "<div name=" + messageObj['attachments'][i]['fileName'].replace(/ /g,"_") + ">";
               icon += "<span class='webix_icon attachment-icon fa-file-archive-o fa-4x'>";
-              icon += messageObj['attachments'][i]['generatedFileName'] + "</span></div><br/>";
+              icon += messageObj['attachments'][i]['generatedFileName'].replace(/ /g,"_") + "</span></div><br/>";
             }
             contentHtml += spaces + icon;
           }
