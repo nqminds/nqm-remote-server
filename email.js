@@ -138,8 +138,8 @@ module.exports = (function() {
             })
 
             if (data_array[i]['flags'].indexOf("\\Seen") === -1) {
-              log('unseen mails are');
-              log(data_array[i]);
+              //log('unseen mails are');
+              //log(data_array[i]);
               data_array[i]['from'] = '<b>' + data_array[i]['from'] + '</b>';
               data_array[i]['date'] = '<b>' + data_array[i]['date'] + '</b>';
               data_array[i]['subject'] = '<b>' + data_array[i]['subject'] + '</b>';
@@ -158,18 +158,25 @@ module.exports = (function() {
   }
   /*--------------------------- get One Mail mailparsered---------------------*/
   Inbox.prototype.getOneMail = function(mailUid,fileCache,cb) {
-    var self = this;
     log('read filename is:'+mailUid);
     var mailObj = JSON.parse(fs.readFileSync(path.join(_workingDir,mailUid+'.json')));
+    if(mailObj["flags"].indexOf("\\Seen") === -1 && mailObj['flags'].indexOf("\\localDraft") === -1){
+      var newMailObj = _.pick(mailObj,["uid", "to", "from", "subject", "date", "flags", "folder"]);
+      mailObj['flags'] += ",\\Seen";
+      newMailObj['flags'] += ",\\Seen";
+      updateLocal(newMailObj,path.join(_workingDir,"inbox.json"));
+      fs.writeFileSync(path.join(_workingDir,newMailObj['uid']+".json"),JSON.stringify(mailObj),{enconding:"utf8",flag:"w"});
+    }
 
-    var mailparser = new MailParser({streamAttachments: true});
+    var mailparser = new MailParser();
     mailparser.on("end", function (mail_object) {
-      //createFolder('attachments');
+      createFolder('attachments');
       if (mail_object.attachments != undefined) {
         mail_object.attachments.forEach(function (attachment) {
           log('attachments', attachment.fileName);
-          fs.writeFileSync(path.join(__dirname, 'public/attachments/' + attachment.fileName.replace(/ /g,"_")),attachment.content);
+          //var output = fs.createWriteStream(path.join(__dirname, 'public/attachments/' + attachment.fileName.replace(/ /g,"_")));
           //attachment.stream.pipe(output);
+          fs.writeFileSync(path.join(__dirname, 'public/attachments/' + attachment.fileName.replace(/ /g,"_")),attachment.content);
         });
       }
       if (mail_object.html === undefined && mail_object.text !== undefined) {
@@ -184,23 +191,6 @@ module.exports = (function() {
     });
     mailparser.write(mailObj['text']);
     mailparser.end();
-
-    if(mailObj["flags"].indexOf("\\Seen") === -1 && mailObj['flags'].indexOf("\\localDraft") === -1){
-      var newMailObj = _.pick(mailObj,["uid", "to", "from", "subject", "date", "flags", "folder"]);
-      mailObj['flags'] += ",\\Seen";
-      newMailObj['flags'] += ",\\Seen";
-      updateLocal(newMailObj,path.join(_workingDir,"inbox.json"));
-      fs.writeFileSync(path.join(_workingDir,newMailObj['uid']+".json"),JSON.stringify(mailObj),{enconding:"utf8",flag:"w"});
-      mailObj['update'] = 1;
-      var seenObj = {
-        id: self._config.emailtable_ID,
-        d: mailObj
-      }
-      fileCache.cacheThis(seenObj, function (err) {
-        if (err)
-          cb(null);
-      });
-    }
   }
   /*---------------------------- end mailparser -------------------------------*/
   Inbox.prototype.getInbox = function(tdxAPI,cb) {
