@@ -1,3 +1,4 @@
+module.exports = (function() {
 var exports = module.exports = {};
 var https = require("https");
 var fs = require('fs');
@@ -8,6 +9,7 @@ var path = require("path");
 var dirname = path.dirname(require.main.filename);
 var cachedDocsPath = 'fileCache.json';
 var structurePath = "fileStructure.json";
+var _workingDir = null;
 
 function downloadFile(url, fileName,cb) {
 
@@ -76,7 +78,7 @@ function cacheFiles(fileList, oldList, token) {
 
 function createCache(fileList, token, fileStruct) {
   var oldList;
-  fs.readFile("fileCache.json", function(err, data) {
+  fs.readFile(path.join(_workingDir,cachedDocsPath), function(err, data) {
     if (err) {
       console.log("Meta corrupt or not found");
       oldList = [];
@@ -89,12 +91,12 @@ function createCache(fileList, token, fileStruct) {
       }
     }
 
-    fs.writeFile(path.join(__dirname,cachedDocsPath), JSON.stringify(fileList), function(err) {
+    fs.writeFile(path.join(_workingDir,cachedDocsPath), JSON.stringify(fileList), function(err) {
       if (err) console.log("Failed to write meta to cache");
       cacheFiles(fileList, oldList, token);
     })
     if(fileStruct != null) {
-      fs.writeFile(path.join(__dirname,structurePath), JSON.stringify(fileStruct), function (err) {
+      fs.writeFile(path.join(_workingDir,structurePath), JSON.stringify(fileStruct), function (err) {
         if (err) console.log("Failed to write file structure to cache");
       })
     }
@@ -108,8 +110,8 @@ function getDocs(){
   ans.data = null;
 
   try {
-    if(fs.statSync(path.join(__dirname,cachedDocsPath))) {
-      var fileContent = fs.readFileSync(path.join(__dirname,cachedDocsPath), 'utf8').toString();
+    if(fs.statSync(path.join(_workingDir,cachedDocsPath))) {
+      var fileContent = fs.readFileSync(path.join(_workingDir,cachedDocsPath), 'utf8').toString();
       //console.log(fileContent);
       ans.data = JSON.parse(fileContent);
     }
@@ -119,8 +121,14 @@ function getDocs(){
   //console.log(ans);
   return ans;
 }
-exports.getAttachments = function(token,cb){
-  createFolder(attachmentPath);
+
+var _init = function(workingDir,userName){
+  _workingDir = workingDir;
+  _userName = userName;
+}
+
+var _getAttachments = function(token,cb){
+  //createFolder(attachmentPath);
   var docs = getDocs();
   console.log(docs);
   if(docs.error != "null"){
@@ -146,8 +154,8 @@ exports.getAttachments = function(token,cb){
   }
 }
 
-exports.getFiles = function(cb, token) {
-  createFolder(docPath);
+var _getFiles = function(cb, token) {
+  //createFolder(docPath);
   var url = 'https://q.nqminds.com/v1/datasets?access_token=' + token + '&filter={"baseType":"rawFile"}';
 
   https.get(url, function(res) {
@@ -172,7 +180,7 @@ exports.getFiles = function(cb, token) {
         res.on('end', function(){
           var folderList = JSON.parse(body);
           createCache(fileList, token, folderList);
-          cb.render("files", { config: fileList, folders: folderList});
+          cb.render("files", { config: fileList, folders: folderList,username:_userName});
         })
 
       })
@@ -182,14 +190,14 @@ exports.getFiles = function(cb, token) {
     });
 
   }).on('error', function() {
-    fs.readFile('fileCache.json', function(err, data) {
+    fs.readFile(path.join(_workingDir,cachedDocsPath), function(err, data) {
 
       if (err) response.status(500).send('Internal Server Error');
 
       else {
         var fileList = JSON.parse(data);
         var folderList = [];
-        fs.readFile('fileStruct.json', function(err, data) {
+        fs.readFile(path.join(_workingDir,structurePath), function(err, data) {
           if (err) response.status(500).send('Internal Server Error');
           else {
             folderList = JSON.parse(data);
@@ -202,5 +210,10 @@ exports.getFiles = function(cb, token) {
 
   });
 
-
 };
+return{
+  init: _init,
+  getFiles: _getFiles,
+  getAttachments: _getAttachments
+}
+}());

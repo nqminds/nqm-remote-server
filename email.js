@@ -157,25 +157,19 @@ module.exports = (function() {
     })
   }
   /*--------------------------- get One Mail mailparsered---------------------*/
-  Inbox.prototype.getOneMail = function(mailUid,cb) {
+  Inbox.prototype.getOneMail = function(mailUid,fileCache,cb) {
+    var self = this;
     log('read filename is:'+mailUid);
     var mailObj = JSON.parse(fs.readFileSync(path.join(_workingDir,mailUid+'.json')));
-    if(mailObj["flags"].indexOf("\\Seen") === -1 && mailObj['flags'].indexOf("\\localDraft") === -1){
-      var newMailObj = _.pick(mailObj,["uid", "to", "from", "subject", "date", "flags", "folder"]);
-      mailObj['flags'] += ",\\Seen";
-      newMailObj['flags'] += ",\\Seen";
-      updateLocal(newMailObj,path.join(_workingDir,"inbox.json"));
-      fs.writeFileSync(path.join(_workingDir,newMailObj['uid']+".json"),JSON.stringify(mailObj),{enconding:"utf8",flag:"w"});
-    }
 
     var mailparser = new MailParser({streamAttachments: true});
     mailparser.on("end", function (mail_object) {
-      createFolder('attachments');
+      //createFolder('attachments');
       if (mail_object.attachments != undefined) {
         mail_object.attachments.forEach(function (attachment) {
           log('attachments', attachment.fileName);
-          var output = fs.createWriteStream(path.join(__dirname, 'public/attachments/' + attachment.generatedFileName));
-          attachment.stream.pipe(output);
+          fs.writeFileSync(path.join(__dirname, 'public/attachments/' + attachment.fileName.replace(/ /g,"_")),attachment.content);
+          //attachment.stream.pipe(output);
         });
       }
       if (mail_object.html === undefined && mail_object.text !== undefined) {
@@ -190,6 +184,23 @@ module.exports = (function() {
     });
     mailparser.write(mailObj['text']);
     mailparser.end();
+
+    if(mailObj["flags"].indexOf("\\Seen") === -1 && mailObj['flags'].indexOf("\\localDraft") === -1){
+      var newMailObj = _.pick(mailObj,["uid", "to", "from", "subject", "date", "flags", "folder"]);
+      mailObj['flags'] += ",\\Seen";
+      newMailObj['flags'] += ",\\Seen";
+      updateLocal(newMailObj,path.join(_workingDir,"inbox.json"));
+      fs.writeFileSync(path.join(_workingDir,newMailObj['uid']+".json"),JSON.stringify(mailObj),{enconding:"utf8",flag:"w"});
+      mailObj['update'] = 1;
+      var seenObj = {
+        id: self._config.emailtable_ID,
+        d: mailObj
+      }
+      fileCache.cacheThis(seenObj, function (err) {
+        if (err)
+          cb(null);
+      });
+    }
   }
   /*---------------------------- end mailparser -------------------------------*/
   Inbox.prototype.getInbox = function(tdxAPI,cb) {
@@ -214,6 +225,7 @@ module.exports = (function() {
 
     fs.stat(path.join(_workingDir,"inbox.json"),function(err,stat){
       if(err){
+        log('get from TBX');
         getTBXtable.call(self,tdxAPI,function(qerr,data_array){
           if(qerr)
             cb(qerr,null);
@@ -223,6 +235,7 @@ module.exports = (function() {
         });
       }
     else{
+        log('getInbox from inbox.json');
         dictInbox = {};
         var oldMessages = fs.readFileSync(path.join(_workingDir,"inbox.json")).toString();
         var ansMessages_array = [];
@@ -261,9 +274,8 @@ module.exports = (function() {
       if (qerr) {
         cb(qerr,null);
       }
-      else{
+      else if (unseen_array !== undefined){
         var unseen_array = data.data;
-
         for(var i=0;i<unseen_array.length;i++){
           if(!_.has(dictInbox,unseen_array[i]['uid'])){
             flag = true;
@@ -273,7 +285,6 @@ module.exports = (function() {
             dictInbox[unseen_array[i]['uid']] = newmessageObj;
           }
         }
-
         if(flag) {
           updateLocal(null, 'inbox.json');
         }
@@ -324,7 +335,8 @@ module.exports = (function() {
         from: msg['from'],
         to: msg['to'],
         subject: msg['subject'],
-        date: msg['date']
+        date: msg['date'],
+        update:1
       };
       var localupdateData = _.omit(updateData, ["text", "modseq", "textcount"]);
       errors = updateLocal(localupdateData, path.join(_workingDir, "inbox.json"));

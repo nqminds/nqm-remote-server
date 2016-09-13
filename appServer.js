@@ -258,7 +258,7 @@ module.exports = (function() {
     getPublication:    _getPublication,
     completeAppAction: _completeAppAction,
     appStartedCallback: _appStartedCallback,
-    executeAction: _executeAction,
+    executeAction: _executeAction
   }
 }());
 

@@ -22,12 +22,11 @@ module.exports = (function(){
   };
   /*-------------------------- send email script ---------------------*/
   function sendEmail(sentArray,cb){
-    log('email user address is',this.smtpLogin);
     var transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
-        user: this.smtpLogin, // Your email id
-        pass: this.smtpPass // Your password
+        user: 'byod23145842@gmail.com', // Your email id
+        pass: 'Zg3NgLqRZEhr' // Your password
       }
     });
     _.forEach(sentArray,function(element){
@@ -113,7 +112,7 @@ module.exports = (function(){
     dataIn = JSON.parse(dataIn);
     //log(dataIn);
     var deletedArray = _.filter(dataIn,function(o){
-      return o["flags"].indexOf("\\Deleted") !== -1;
+      return o['update'] == 1;
     })
     //log(deletedArray);
     var addArray = _.without(dataIn,deletedArray);
@@ -148,7 +147,7 @@ module.exports = (function(){
     log('deleted obj is: ');
     log(updateData.payload);
 
-    sendEmail.call(upsertData.payload,function(err,ans){
+    sendEmail(upsertData.payload,function(err,ans){
       if(err) {
         log(err)
         cb(err, null)

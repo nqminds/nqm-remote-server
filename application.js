@@ -27,6 +27,7 @@ module.exports = (function() {
   var _filedriver = require('./fileCache');
   var _fileCache = null;
   var _tdxAPI =  null;
+  var _tdxFileAPI = null;
   var syncdriver = require('./sync');
   var fs = require('fs');
   var _sync = null;
@@ -71,9 +72,10 @@ module.exports = (function() {
 
 	try{
 		fs.statSync(_workingDir);
+
 	} catch(err) {
 		if (err && err.errno!=-2)
-        	throw err;
+        	throw (err);
 		
 		try{
 			fs.mkdirSync(_workingDir);
@@ -82,12 +84,44 @@ module.exports = (function() {
 		}
 	}
 
+  try{
+    fs.statSync(path.join(_workingDir, 'attachments'));
+
+  } catch(err) {
+      if (err && err.errno!=-2)
+        throw (err);
+
+      try{
+        fs.mkdirSync(path.join(_workingDir, 'attachments'));
+        fs.symlinkSync(path.join(_workingDir, 'attachments'), path.join(__dirname, '/public/attachments'));
+      } catch(err) {
+        throw err;
+      }
+    }
+
+    try{
+      fs.statSync(path.join(_workingDir, 'docViews'));
+
+    } catch(err) {
+      if (err && err.errno!=-2)
+        throw (err);
+
+      try{
+        fs.mkdirSync(path.join(_workingDir, 'docViews'));
+        fs.symlinkSync(path.join(_workingDir, 'docViews'), path.join(__dirname, '/public/docViews'));
+      } catch(err) {
+        throw err;
+      }
+    }
+
 	try{
 		appconfig = require(path.join(_workingDir,config.userAppConfigName));
 		authState = false;
 		_fileCache = new _filedriver(appconfig,_workingDir);
 		_tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
+    _tdxFileAPI = (new (require("nqm-api-tdx"))(appconfig));
 		_email =new _emaildriver(appconfig, _workingDir);
+    _cache.init(_workingDir,appconfig.userName);
 	} catch(err) {
 		authState = true;
 	}
@@ -174,7 +208,9 @@ module.exports = (function() {
 										authState = false;
             							_fileCache = new _filedriver(appconfig,_workingDir);
             							_tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
+                          _tdxFileAPI =  (new (require("nqm-api-tdx"))(appconfig));
             							_email = new _emaildriver(appconfig, _workingDir);
+                          _cache.init(_workingDir,appconfig.userName);
 										res.redirect("/");
 									}
 								});
@@ -210,8 +246,14 @@ module.exports = (function() {
 
     /*---------------- get files -----------------------------*/
     app.get("/files", function(req, response) {
-		if (!authState)
-        	_cache.getFiles(response, _emailAccessToken);
+		if (!authState) {
+      _tdxFileAPI.authenticate(appconfig.folder_token, appconfig.folder_Pass, function(foldererr, accessToken) {
+        if (foldererr) log(foldererr);
+        else {
+          _cache.getFiles(response, accessToken);
+        }
+      });
+    }
 		else
 			response.render("auth");
     });
@@ -230,8 +272,10 @@ module.exports = (function() {
             log(err);
             if(err == "NULL DATA")
               res.render("email",{messages:[],docNames:[]});
-            else
+            else {
+              log(err);
               res.redirect("/");
+            }
           } else{
             _cache.getAttachments(_tdxAPI['_accessToken'], function (error,docNames) {
               if(error)
@@ -320,7 +364,7 @@ module.exports = (function() {
     app.post(/message/,function(req,res,next){
       log('view message id is: '+req.query.id);
       var mailUid = req.query.id;
-      _email.getOneMail(mailUid,function(mailObj){
+      _email.getOneMail(mailUid,_fileCache,function(mailObj){
         //log('callback result is:');
         //log(mailContent);
         //log(JSON.parse(mailContent));
