@@ -87,7 +87,8 @@ module.exports = (function() {
   }
   function getTBXtable(tdxAPI,cb){
     var errors;
-    tdxAPI.query("datasets/" + this._config.emailtable_ID + "/data", null, null, null, function (qerr, data) {
+    var opts = {"sort":{"date":-1},"limit":100}
+    tdxAPI.query("datasets/" + this._config.emailtable_ID + "/data", null, null, opts, function (qerr, data) {
       if (qerr) {
         log('cannot get the data');
         cb("NULL DATA", null);
