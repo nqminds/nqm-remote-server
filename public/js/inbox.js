@@ -170,14 +170,18 @@ var gridtable = {
     view:"datatable",css: "rounded_top", scrollX:false,
     columns:[
       { id:"ch1", header:{ content:"masterCheckbox" }, template:"{common.checkbox()}",checkValue:'on', uncheckValue:'off', css:"center", width: 40 },
-      { id:"from", width: 250, header:"From" },
+      { id:"from", width: 150, header:"From" },
       { id:"subject", header:"Subject", fillspace:true },
-      { id:"date",header:"Date", width: 150,format:function(value){
+      { id:"date",header:"Date", width: 250,format:function(value){
         if(value.indexOf("<b>") !== -1 || value.indexOf("<\/b>") !== -1){
           value = replaceBold(value);
         }
         return new Date(value);
-      },sort:"date"}
+      }},
+      {id:"utcdate",header:"utcdate",template:"#date#",format:function(value){
+        return new Date(value).getTime();
+      }
+      ,sort:"int",hidden:true}
     ],
     select:"row",
     pager:{
@@ -189,6 +193,8 @@ var gridtable = {
     data:gData,
     ready:function(){
       console.log(gData);
+      //this.sort("date", "desc", "date");
+      //this.markSorting("date", "desc");
     }};
 var contentUI = {rows:[
   {

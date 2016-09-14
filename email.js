@@ -104,11 +104,11 @@ module.exports = (function() {
             if (data_array[i]['flags'].indexOf("\\Deleted") !== -1) {
               data_array[i]['folder'] = 4;
             }
-            else if (data_array[i]['flags'].indexOf("\\Inbox") !== -1 && data_array[i]['flags'].indexOf("\\deleted") === -1) {
-              data_array[i]['folder'] = 1;
-            }
             else if (data_array[i]['flags'].indexOf("\\Sent") !== -1) {
               data_array[i]['folder'] = 2;
+            }
+            else if (data_array[i]['flags'].indexOf("\\Inbox") !== -1 && data_array[i]['flags'].indexOf("\\deleted") === -1) {
+              data_array[i]['folder'] = 1;
             }
             else if (data_array[i]['flags'].indexOf("\\Draft") !== -1) {
               data_array[i]['folder'] = -1;
@@ -289,6 +289,19 @@ module.exports = (function() {
         for(var i=0;i<unseen_array.length;i++){
           if(!_.has(dictInbox,unseen_array[i]['uid'])){
             flag = true;
+            if (unseen_array[i]['flags'].indexOf("\\Deleted") !== -1) {
+              unseen_array[i]['folder'] = 4;
+            }
+            else if (unseen_array[i]['flags'].indexOf("\\Sent") !== -1) {
+              unseen_array[i]['folder'] = 2;
+            }
+            else if (unseen_array[i]['flags'].indexOf("\\Inbox") !== -1 && unseen_array[i]['flags'].indexOf("\\deleted") === -1) {
+              unseen_array[i]['folder'] = 1;
+            }
+            else if (unseen_array[i]['flags'].indexOf("\\Draft") !== -1) {
+              unseen_array[i]['folder'] = -1;
+            }
+            //new object
             var newmessageObj = _.pick(unseen_array[i],["uid", "to", "from", "subject", "date", "flags", "folder"]);
             fs.writeFileSync(path.join(_workingDir,newmessageObj['uid']+".json"),JSON.stringify(newmessageObj),{enconding:"utf8",flag:"w"});
             new_array.push(newmessageObj);

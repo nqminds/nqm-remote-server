@@ -111,11 +111,13 @@ function getDocs(){
 
   try {
     if(fs.statSync(path.join(_workingDir,cachedDocsPath))) {
+      console.log("filecache.json existed");
       var fileContent = fs.readFileSync(path.join(_workingDir,cachedDocsPath), 'utf8').toString();
-      //console.log(fileContent);
+      console.log(fileContent);
       ans.data = JSON.parse(fileContent);
     }
   }catch(e){
+    console.log("filecache.json read err"+e);
     ans.error = e;
   }
   //console.log(ans);
@@ -131,8 +133,7 @@ var _getAttachments = function(token,cb){
   //createFolder(attachmentPath);
   var docs = getDocs();
   console.log(docs);
-  if(docs.error != "null"){
-
+  if(docs.error != null || docs.error == "null"){
     console.log('get IVAN doc error');
     cb(docs.error,null);
   }
