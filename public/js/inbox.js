@@ -6,9 +6,6 @@
 console.log(gData);
 console.log(gdocNames);
 
-//lodash underscore
-var _u = _.noConflict();
-
 //global attachment docs variable
 var gAttachDoc = [];
 

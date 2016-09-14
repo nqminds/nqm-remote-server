@@ -409,9 +409,9 @@ module.exports = (function() {
       log('listening at http://%s:%s', host, port);
     });
   
-    _tdxConnection.start(config, tdxConnectionHandler);
-    _appServer.start(config, server, _tdxConnection);
-    _subscriptionManager.initialise(config, _tdxConnection, _appServer);
+    //_tdxConnection.start(config, tdxConnectionHandler);
+    //_appServer.start(config, server, _tdxConnection);
+    //_subscriptionManager.initialise(config, _tdxConnection, _appServer);
   };
   
   return {

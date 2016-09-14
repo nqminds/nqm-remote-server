@@ -3,9 +3,9 @@
  */
 
 webix.debug = true;
-
-secdEventBus = new EventEmitter();
-secdEventBus.defineEvents(["data-added","data-changed","data-removed"]);
+//
+//secdEventBus = new EventEmitter();
+//secdEventBus.defineEvents(["data-added","data-changed","data-removed"]);
 
 var onMainClick = function(){
   console.log('click');
