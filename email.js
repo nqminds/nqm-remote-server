@@ -194,6 +194,7 @@ module.exports = (function() {
           //attachment.stream.pipe(output);
           fs.writeFileSync(path.join(__dirname, 'public/attachments/' + attachment.fileName.replace(/ /g,"_")),attachment.content);
         });
+        mailObj['attachments'] = mail_object['attachments'];
       }
       if (mail_object.html === undefined && mail_object.text !== undefined) {
         mailObj['text'] = mail_object.text;
@@ -201,7 +202,6 @@ module.exports = (function() {
       else if(mail_object.html !== undefined){
         mailObj['text'] = mail_object.html;
       }
-      mailObj['attachments'] = mail_object['attachments'];
       //log(mailObj['text']);
       cb(mailObj);
     });

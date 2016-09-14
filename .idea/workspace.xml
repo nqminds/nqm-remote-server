@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c3c2dc00-4a11-4bc8-a185-58cfd814a032" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cache.js" afterPath="$PROJECT_DIR$/cache.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/email.js" afterPath="$PROJECT_DIR$/email.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/public/js/inbox.js" afterPath="$PROJECT_DIR$/public/js/inbox.js" />
     </list>
     <ignored path="nqm-remote-server.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -68,8 +66,8 @@
       <file leaf-file-name="email.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/email.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-0.6728281">
-              <caret line="161" column="26" selection-start-line="161" selection-start-column="18" selection-end-line="161" selection-end-column="26" />
+            <state vertical-scroll-proportion="0.42698705">
+              <caret line="196" column="60" selection-start-line="196" selection-start-column="60" selection-end-line="196" selection-end-column="60" />
               <folding />
             </state>
           </provider>
@@ -117,9 +115,9 @@
         <option value="$PROJECT_DIR$/sync.js" />
         <option value="$PROJECT_DIR$/views/email.jade" />
         <option value="$PROJECT_DIR$/application.js" />
-        <option value="$PROJECT_DIR$/email.js" />
         <option value="$PROJECT_DIR$/public/js/inbox.js" />
         <option value="$PROJECT_DIR$/cache.js" />
+        <option value="$PROJECT_DIR$/email.js" />
       </list>
     </option>
   </component>
@@ -592,8 +590,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/email.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-0.6728281">
-          <caret line="161" column="26" selection-start-line="161" selection-start-column="18" selection-end-line="161" selection-end-column="26" />
+        <state vertical-scroll-proportion="0.42698705">
+          <caret line="196" column="60" selection-start-line="196" selection-start-column="60" selection-end-line="196" selection-end-column="60" />
           <folding />
         </state>
       </provider>
