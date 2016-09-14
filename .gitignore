@@ -35,3 +35,5 @@ attachments/
 docViews/
 *xml
 config.json
+/attachments/
+/dovViews/
