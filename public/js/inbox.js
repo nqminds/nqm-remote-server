@@ -321,9 +321,9 @@ var form = {
         {view:"button",id:"id_saveDraft",value:"Save",click:saveDraft},
         { view:"button", value:"send",click:function(){
           $$("reply-address").validate();
-          //if($$('reply-address').validate()){
-          //  send();
-          //}
+          if($$('reply-address').validate()){
+            send();
+          }
         }}
       ]
     }
@@ -476,6 +476,7 @@ webix.ready(function() {
   setInterval(function(){
     webix.ajax().post("/refresh",function(text,data,XmlHttpRequest){
       if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200) {
+        console.log(text);
         var newmessages = JSON.parse(text);
         if(newmessages.length>0){
           for(var i=0;i<newmessages.length;i++){

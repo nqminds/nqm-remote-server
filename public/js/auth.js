@@ -37,13 +37,9 @@ var contentUI = {
                 invalidMessage: "Smtp port cannot be empty"}
             ]},
             //{ rows:[
-<<<<<<< HEAD
             //{ template:"Activation", type:"section"},
-            { id:"id_field", view:"text", name:"activation",label:"ID",
-=======
               //{ template:"Activation", type:"section"},
             { id:"id_field", view:"text", name:"activation",label:"Verification ID",
->>>>>>> 7e10aba5c0857905f2c019e4abdecca67d158073
               required:true,
               validate:webix.rules.isNotEmpty,
               invalidMessage: "Activation code cannot be empty", labelWidth:200},
