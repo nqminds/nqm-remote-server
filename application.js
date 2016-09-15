@@ -194,47 +194,103 @@ module.exports = (function() {
 	app.post('/auth', function (req, res) {
 
 		log("Auth request:"+authState+":"+JSON.stringify(req.body));
-    log(JSON.parse(req.body.form).userID);
 
 		if(authState && JSON.parse(req.body.form).userID!==undefined) {
       log('authstate true');
-			var tAPI =  (new (require("nqm-api-tdx"))(config));
+      if (req.body == null) {
+        res.redirect("/");
+        return;
+      }
 
-			tAPI.authenticate(config.authtable_token, config.authtable_Pass, function(taberr, tabAccessToken){
-				if(taberr) res.send({error:1, poststr:"Can't authenticate into TBX"});
-				else {
-					tAPI.query("datasets/" + config.authtable_ID + "/data", JSON.parse(req.body.form).userID, null, null, function (qerr, data) {
-						if (qerr){
-              log(qerr);
-              res.send({error:1, poststr:"Can't retrieve data from TBX!"});}
-						else {
-              log(data);
-							if (!data.data.length) {
-								log("Bad ID!");
-								res.send({error:1, poststr:"Wrong verification ID!"});
-							}
-							else {
-								fs.writeFile(path.join(_workingDir,config.userAppConfigName), JSON.stringify(data.data[0]), function(ferr){
-									if (ferr) {
-										log(ferr);
-										res.send({error:1, poststr:"Can't access the device!"});
-									} else {
-										appconfig = data.data[0];
-										authState = false;
-            							_fileCache = new _filedriver(appconfig,_workingDir);
-            							_tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
-                          				_tdxFileAPI =  (new (require("nqm-api-tdx"))(appconfig));
-            							_email = new _emaildriver(appconfig, _workingDir);
-                          				_cache.init(_workingDir,appconfig.userName);
-										res.send({error:0, poststr:"ID OK!"});
-									}
-								});
-							}
-						}
-					});
-				}
-			});
-		} else res.redirect("/");
+      var form = JSON.parse(req.body.form);
+      if (form == null) {
+        res.redirect("/");
+        return;
+      }
+
+      if (authState && form.userID !== undefined) {
+        var tAPI = (new (require("nqm-api-tdx"))(config));
+
+        tAPI.authenticate(config.authtable_token, config.authtable_Pass, function (taberr, tabAccessToken) {
+          if (taberr) res.send({error: 1, poststr: "Can't authenticate into TBX"});
+          else {
+            tAPI.query("datasets/" + config.authtable_ID + "/data", {userID: form.userID}, null, null, function (qerr, data) {
+              if (qerr) res.send({error: 1, poststr: "Can't retrieve data from TBX!"});
+              else {
+                log(data);
+                if (!data.data.length) {
+                  log("Bad ID!");
+                  res.send({error: 1, poststr: "Wrong verification ID!"});
+                }
+                else if (data.data.length == 1) {
+                  if (parseInt(req.body.type)) {
+                    data.data[0].smtpServer = form.smtpServer;
+                    data.data[0].smtpLogin = form.smtpLogin;
+                    data.data[0].smtpPass = form.smtpPass;
+                    data.data[0].smtpPort = parseInt(form.smtpPort);
+                    data.data[0].smtpTLS = parseInt(form.smtpTLS);
+                  }
+
+                  fs.writeFile(path.join(_workingDir, config.userAppConfigName), JSON.stringify(data.data[0]), function (ferr) {
+                    if (ferr) {
+                      log(ferr);
+                      res.send({error: 1, poststr: "Can't access the device!"});
+                    } else {
+                      appconfig = data.data[0];
+                      authState = false;
+                      _fileCache = new _filedriver(appconfig, _workingDir);
+                      _tdxAPI = (new (require("nqm-api-tdx"))(appconfig));
+                      _tdxFileAPI = (new (require("nqm-api-tdx"))(appconfig));
+                      _email = new _emaildriver(appconfig, _workingDir);
+                      _cache.init(_workingDir, appconfig.userName);
+
+                      if (!parseInt(req.body.type))
+                        res.send({error: 0, poststr: "ID OK!"});
+                      else {
+                        var tdxBoxesAPI = (new (require("nqm-api-tdx"))(config));
+                        tdxBoxesAPI.authenticate(config.byodimapboxes_token, config.byodimapboxes_Pass, function (boxeserr, boxesAccessToken) {
+                          if (boxeserr) {
+                            log("Can't write into imap boxes table.");
+                            res.send({error: 1, poststr: "Can't send data to TBX!"});
+                          } else {
+
+                            var entry = {
+                              "userID": form.userID,
+                              "new": 0,
+                              "total": 0,
+                              "mailboxname": form.mailboxname,
+                              "imaptls": form.imaptls,
+                              "imaphost": form.imaphost,
+                              "imapport": form.imapport,
+                              "mailtablepass": appconfig.mailtablepass,
+                              "mailtabletoken": appconfig.mailtabletoken,
+                              "mailtableid": appconfig.mailtableid,
+                              "imapuserid": form.imapuserid,
+                              "imapuserpass": form.imapuserpass
+                            };
+
+                            tdxBoxesAPI.addDatasetData(config.byodimapboxes_ID, entry, function (dataerr, datares) {
+                              if (dataerr) {
+                                log("Can't write into imap boxes table.");
+                                res.send({error: 1, poststr: "Can't send data to TBX!"});
+                              } else
+                                res.send({error: 0, poststr: "ID OK!"});
+                            });
+                          }
+                        });
+                      }
+                    }
+                  });
+                } else if (data.data.length > 1) {
+                  log("Two auth same entries found in TBX!");
+                  res.send({error: 1, poststr: "Can't retrieve data from TBX!"});
+                }
+              }
+            });
+          }
+        });
+      } else res.redirect("/");
+    }
 	});
 
 /*

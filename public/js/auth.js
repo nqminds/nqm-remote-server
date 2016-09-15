@@ -1,4 +1,3 @@
-
 var contentUI = {
   type: "space",
   rows: [
@@ -8,7 +7,7 @@ var contentUI = {
         {},
         {
           view:"form",
-		      id: "idform",
+          id: "idform",
           width:600,
           height:400,
           scroll:"y",
@@ -41,7 +40,7 @@ var contentUI = {
                 invalidMessage: "SMTP port cannot be empty"}
             ]},
             //{ rows:[
-              //{ template:"Activation", type:"section"},
+            //{ template:"Activation", type:"section"},
             { id:"id_field", view:"text", name:"activation",label:"ID",
               required:true,
               validate:webix.rules.isNotEmpty,
@@ -99,10 +98,10 @@ function onButtonClick(type){
     smtpPort:$$('id_smtpport').getValue(),
     userID:$$('id_field').getValue()
   }
-  console.log(accountObj);
 
-  webix.ajax().post('/auth', {"type":type, "form": accountObj}, function (text, data, XmlHttpRequest) {
-    console.log(text);
+  var postJSON = {type:type, form: accountObj};
+
+  webix.ajax().post('/auth', postJSON, function (text, data, XmlHttpRequest) {
     var ret = JSON.parse(text);
     if (ret.error)
       webix.message({type: "error", text: ret.poststr});
@@ -116,4 +115,3 @@ function onButtonClick(type){
 
 function onCancelClick(){
 }
-

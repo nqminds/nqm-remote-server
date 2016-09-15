@@ -22,42 +22,46 @@ module.exports = (function(){
   };
   /*-------------------------- send email script ---------------------*/
   function sendEmail(sentArray,cb){
-    var transporter = nodemailer.createTransport({
-      service: 'Gmail',
-      auth: {
-        user: 'byod23145842@gmail.com', // Your email id
-        pass: 'Zg3NgLqRZEhr' // Your password
-      }
-    });
-    _.forEach(sentArray,function(element){
-      //var replyTo = element['uid']>0?element['uid']:"";
-      var mailOptions = {
-        to: element['to'],
-        cc: element['cc'],
-        bcc:element['Bcc'],
-        subject: element['subject'],
-        html:element['text']
-      }
-      if(element["In-Reply-To"]) {
-        if (element["In-Reply-To"].length > 0) {
-          var ReplyTo = {
-            "In-Reply-To": element["In-Reply-To"]
+    if(sentArray.length>0) {
+      var transporter = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+          user: 'byod23145842@gmail.com', // Your email id
+          pass: 'Zg3NgLqRZEhr' // Your password
+        }
+      });
+      _.forEach(sentArray, function (element) {
+        //var replyTo = element['uid']>0?element['uid']:"";
+        var mailOptions = {
+          to: element['to'],
+          cc: element['cc'],
+          bcc: element['Bcc'],
+          subject: element['subject'],
+          html: element['text']
+        }
+        if (element["In-Reply-To"]) {
+          if (element["In-Reply-To"].length > 0) {
+            var ReplyTo = {
+              "In-Reply-To": element["In-Reply-To"]
+            }
+            _.assign(mailOptions, ReplyTo);
           }
-          _.assign(mailOptions, ReplyTo);
         }
-      }
-      if(element['attachments']){
-        _.assign(mailOptions,{attachments:element['attachments']});
-      }
-      transporter.sendMail(mailOptions,function(err,info){
-        if(err){
-          cb(err,null);
+        if (element['attachments']) {
+          _.assign(mailOptions, {attachments: element['attachments']});
         }
-        cb(null,null);
+        transporter.sendMail(mailOptions, function (err, info) {
+          if (err) {
+            cb(err, null);
+          }
+          cb(null, null);
+        })
       })
-    })
-    log(sentArray);
-
+      log(sentArray);
+    }
+    else{
+      cb(null,null);
+    }
   }
   /*-------------------------- upsert function -----------------------*/
   function upsertDataBulk(commandHost, accessToken,data, cb) {
@@ -115,8 +119,11 @@ module.exports = (function(){
       return o['update'] == 1;
     })
     //log(deletedArray);
-    var addArray = _.without(dataIn,deletedArray);
-    //log(addArray);
+    var addArray = _.filter(dataIn,function(o){
+      return o['update'] == undefined || o['update'] !=1;
+    })
+    log('addarray is ');
+    log(addArray);
 
     var upsertData = {
       datasetId:dataId,
@@ -139,17 +146,17 @@ module.exports = (function(){
     })
 
 
-    log('update obj is: ');
-    log(JSON.stringify(deletedPayload));
+    //log('update obj is: ');
+    //log(JSON.stringify(deletedPayload));
     var updateData = {};
     updateData.datasetId = dataId;
     updateData.payload = deletedPayload;
-    log('deleted obj is: ');
-    log(updateData.payload);
+    //log('deleted obj is: ');
+    //log(updateData.payload);
 
     sendEmail(upsertData.payload,function(err,ans){
       if(err) {
-        log(err)
+        log(err);
         cb(err, null)
       }
       else{
