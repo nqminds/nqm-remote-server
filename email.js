@@ -527,6 +527,7 @@ module.exports = (function() {
     });
   }
 
+/*
   Inbox.prototype.getAttachmentsList = function(cb){
     var self = this;
     self._tdxAPI.query("datasets/" + self._config.byodattachment_ID + "/data", null, null, null, self._config.byodimapboxes_token,function (qerr, data) {
@@ -545,5 +546,6 @@ module.exports = (function() {
       }
     })
   }
+*/
   return Inbox;
 }());

@@ -35,5 +35,7 @@ attachments/
 docViews/
 *xml
 config.json
+authfield1.json
+authfield2.json
 /attachments/
 /dovViews/
