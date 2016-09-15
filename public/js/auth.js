@@ -102,8 +102,8 @@ function onButtonClick(type){
   console.log(accountObj);
 
   webix.ajax().post('/auth', {"type":type, "form": accountObj}, function (text, data, XmlHttpRequest) {
-    var ret = JSON.parse(text);
     console.log(text);
+    var ret = JSON.parse(text);
     if (ret.error)
       webix.message({type: "error", text: ret.poststr});
     else {

@@ -300,8 +300,9 @@ module.exports = (function() {
               unseen_array[i]['folder'] = -1;
             }
             //new object
+            fs.writeFileSync(path.join(_workingDir,unseen_array[i]['uid']+".json"),JSON.stringify(unseen_array[i]),{enconding:"utf8",flag:"w"});
+
             var newmessageObj = _.pick(unseen_array[i],["uid", "to", "from", "subject", "date", "flags", "folder"]);
-            fs.writeFileSync(path.join(_workingDir,newmessageObj['uid']+".json"),JSON.stringify(newmessageObj),{enconding:"utf8",flag:"w"});
             new_array.push(newmessageObj);
             dictInbox[unseen_array[i]['uid']] = newmessageObj;
             newmessageObj['from'] = "<b>"+newmessageObj['from']+"<b>";

@@ -194,16 +194,21 @@ module.exports = (function() {
 	app.post('/auth', function (req, res) {
 
 		log("Auth request:"+authState+":"+JSON.stringify(req.body));
+    log(JSON.parse(req.body.form).userID);
 
-		if(authState && req.body.userID!==undefined) {
+		if(authState && JSON.parse(req.body.form).userID!==undefined) {
+      log('authstate true');
 			var tAPI =  (new (require("nqm-api-tdx"))(config));
 
 			tAPI.authenticate(config.authtable_token, config.authtable_Pass, function(taberr, tabAccessToken){
 				if(taberr) res.send({error:1, poststr:"Can't authenticate into TBX"});
 				else {
-					tAPI.query("datasets/" + config.authtable_ID + "/data", req.body, null, null, function (qerr, data) {
-						if (qerr) res.send({error:1, poststr:"Can't retrieve data from TBX!"});
+					tAPI.query("datasets/" + config.authtable_ID + "/data", JSON.parse(req.body.form).userID, null, null, function (qerr, data) {
+						if (qerr){
+              log(qerr);
+              res.send({error:1, poststr:"Can't retrieve data from TBX!"});}
 						else {
+              log(data);
 							if (!data.data.length) {
 								log("Bad ID!");
 								res.send({error:1, poststr:"Wrong verification ID!"});
