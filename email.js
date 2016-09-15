@@ -180,7 +180,7 @@ module.exports = (function() {
       log(updateObj);
       fileCache.cacheThis(updateObj, function (err) {
         if (err) {
-          cb(err);
+          cb(err,null);
         }
       })
     }
@@ -201,7 +201,7 @@ module.exports = (function() {
         mailObj['text'] = mail_object.html;
       }
       //log(mailObj['text']);
-      cb(mailObj);
+      cb(null,mailObj);
     });
     mailparser.write(mailObj['text']);
     mailparser.end();

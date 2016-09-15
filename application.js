@@ -369,11 +369,13 @@ module.exports = (function() {
     app.post(/message/,function(req,res,next){
       log('view message id is: '+req.query.id);
       var mailUid = req.query.id;
-      _email.getOneMail(mailUid,_fileCache,function(mailObj){
-        //log('callback result is:');
-        //log(mailContent);
-        //log(JSON.parse(mailContent));
-        res.send(mailObj);
+      _email.getOneMail(mailUid,_fileCache,function(mailerr,mailObj){
+        if(mailerr){
+          throw mailerr;
+        }
+        else if(mailObj !== null){
+          res.send(mailObj);
+        }
       })
     })
     /*********************************************************************************************/
