@@ -88,7 +88,7 @@ module.exports = (function() {
   function getTBXtable(tdxAPI,cb){
 
     var errors;
-    var opts = {"sort":{"date":-1},"limit":100};
+    var opts = {"sort":{"date":-1},"limit":50};
     tdxAPI.query("datasets/" + this._config.emailtable_ID + "/data", null, null, opts, function (qerr, data) {
       if (qerr) {
         log('cannot get the data');
@@ -109,7 +109,7 @@ module.exports = (function() {
             else if (data_array[i]['flags'].indexOf("\\Sent") !== -1) {
               data_array[i]['folder'] = 2;
             }
-            else if (data_array[i]['flags'].indexOf("\\Inbox") !== -1 && data_array[i]['flags'].indexOf("\\deleted") === -1) {
+            else if (data_array[i]['flags'].indexOf("\\Inbox") !== -1 && data_array[i]['flags'].indexOf("\\eleted") === -1) {
               data_array[i]['folder'] = 1;
             }
             else if (data_array[i]['flags'].indexOf("\\Draft") !== -1) {
@@ -118,8 +118,6 @@ module.exports = (function() {
             savedObj = _.pick(data_array[i], ["uid", "to", "from", "subject", "date", "flags", "folder"]);
             saved_array.push(savedObj);
             dictInbox[savedObj.uid] = savedObj;
-            log("tbxtable obj finished");
-
             fs.writeFile(path.join(_workingDir, data_array[i]['uid'] + '.json'), JSON.stringify(data_array[i], null, 4), {
               encoding: "utf8",
               flag: "w"

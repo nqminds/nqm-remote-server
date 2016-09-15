@@ -1,0 +1,10 @@
+extends ./layout.jade
+block title
+    SECD
+block headScript
+    script(src='js/webix-proxy.js')
+    script(src='js/user.js')
+    script.
+        var appUsername = '#{username}';
+        console.log(appUsername);
+block content

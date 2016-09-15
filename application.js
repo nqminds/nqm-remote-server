@@ -244,6 +244,7 @@ module.exports = (function() {
     });
 */
 
+
     /*---------------- get files -----------------------------*/
     app.get("/files", function(req, response) {
 		if (!authState) {
@@ -271,7 +272,7 @@ module.exports = (function() {
           if(err) {
             log(err);
             if(err == "NULL DATA")
-              res.render("email",{messages:[],docNames:[]});
+              res.render("email",{messages:[],docNames:[],username:appconfig.userName});
             else {
               log(err);
               res.redirect("/");

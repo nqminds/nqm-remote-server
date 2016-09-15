@@ -135,7 +135,7 @@ var _getAttachments = function(token,cb){
   console.log(docs);
   if(docs.error != null || docs.error == "null"){
     console.log('get IVAN doc error');
-    cb(docs.error,null);
+    cb("IVAN doc error",null);
   }
   else {
     var docNames = [];
