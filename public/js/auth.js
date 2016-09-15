@@ -99,11 +99,11 @@ function onButtonClick(type){
     smtpPort:$$('id_smtpport').getValue(),
     userID:$$('id_field').getValue()
   }
-  console.log(accountObj);
 
-  webix.ajax().post('/auth', {"type":type, "form": accountObj}, function (text, data, XmlHttpRequest) {
+  var postJSON = {type:type, form: accountObj};
+
+  webix.ajax().post('/auth', postJSON, function (text, data, XmlHttpRequest) {
     var ret = JSON.parse(text);
-    console.log(text);
     if (ret.error)
       webix.message({type: "error", text: ret.poststr});
     else {

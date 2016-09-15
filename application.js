@@ -194,21 +194,40 @@ module.exports = (function() {
 	app.post('/auth', function (req, res) {
 
 		log("Auth request:"+authState+":"+JSON.stringify(req.body));
+		
+		if(req.body==null) {
+			res.redirect("/");
+			return;
+		}
+		
+		var form = JSON.parse(req.body.form);
+		if (form==null) {
+			res.redirect("/");
+			return;
+		}
 
-		if(authState && req.body.userID!==undefined) {
+		if(authState && form.userID!==undefined) {
 			var tAPI =  (new (require("nqm-api-tdx"))(config));
 
 			tAPI.authenticate(config.authtable_token, config.authtable_Pass, function(taberr, tabAccessToken){
 				if(taberr) res.send({error:1, poststr:"Can't authenticate into TBX"});
 				else {
-					tAPI.query("datasets/" + config.authtable_ID + "/data", req.body, null, null, function (qerr, data) {
+					tAPI.query("datasets/" + config.authtable_ID + "/data", {userID:form.userID}, null, null, function (qerr, data) {
 						if (qerr) res.send({error:1, poststr:"Can't retrieve data from TBX!"});
 						else {
 							if (!data.data.length) {
 								log("Bad ID!");
 								res.send({error:1, poststr:"Wrong verification ID!"});
 							}
-							else {
+							else if(data.data.length==1){
+								if(parseInt(req.body.type)) {
+									data.data[0].smtpServer = form.smtpServer;
+									data.data[0].smtpLogin = form.smtpLogin;
+									data.data[0].smtpPass = form.smtpPass;
+									data.data[0].smtpPort = parseInt(form.smtpPort);
+									data.data[0].smtpTLS = parseInt(form.smtpTLS);
+								}
+
 								fs.writeFile(path.join(_workingDir,config.userAppConfigName), JSON.stringify(data.data[0]), function(ferr){
 									if (ferr) {
 										log(ferr);
@@ -221,9 +240,47 @@ module.exports = (function() {
                           				_tdxFileAPI =  (new (require("nqm-api-tdx"))(appconfig));
             							_email = new _emaildriver(appconfig, _workingDir);
                           				_cache.init(_workingDir,appconfig.userName);
-										res.send({error:0, poststr:"ID OK!"});
+										
+										if (!parseInt(req.body.type))
+											res.send({error:0, poststr:"ID OK!"});
+										else {
+											var tdxBoxesAPI = (new (require("nqm-api-tdx"))(config));
+											tdxBoxesAPI.authenticate(config.byodimapboxes_token, config.byodimapboxes_Pass, function(boxeserr, boxesAccessToken){
+												if (boxeserr) {
+													log("Can't write into imap boxes table.");
+													res.send({error:1, poststr:"Can't send data to TBX!"});
+												} else {
+
+													var entry = {
+														"userID":form.userID,
+														"new":0,
+														"total":0,
+														"mailboxname":form.mailboxname,
+														"imaptls":form.imaptls,
+														"imaphost":form.imaphost,
+														"imapport":form.imapport,
+														"mailtablepass":appconfig.mailtablepass,
+														"mailtabletoken":appconfig.mailtabletoken,
+														"mailtableid":appconfig.mailtableid,
+														"imapuserid":form.imapuserid,
+														"imapuserpass":form.imapuserpass
+													};
+
+													tdxBoxesAPI.addDatasetData(config.byodimapboxes_ID, entry, function(dataerr, datares){
+														if (dataerr) {
+                                                    		log("Can't write into imap boxes table.");
+                                                    		res.send({error:1, poststr:"Can't send data to TBX!"});
+                                                		} else
+															res.send({error:0, poststr:"ID OK!"});
+													});
+												}
+											});
+										}
 									}
 								});
+							} else if(data.data.length>1) {
+								log("Two auth same entries found in TBX!");
+                                res.send({error:1, poststr:"Can't retrieve data from TBX!"});
 							}
 						}
 					});

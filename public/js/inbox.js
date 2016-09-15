@@ -3,14 +3,10 @@
  */
 //
 
-console.log(gData);
-console.log(gdocNames);
-
 //global attachment docs variable
 var gAttachDoc = [];
 
 function onViewerClick(){
-  console.log('click');
   webix.send('/files',null,"GET");
 }
 
@@ -18,7 +14,6 @@ function onEmailClick(){
   webix.send('/email',null,"GET");
 }
 var onUserClick = function() {
-  console.log('logout');
   window.location.replace("/logout");
 }
 function send() {
@@ -39,12 +34,8 @@ function send() {
     attachments:gAttachDoc
   };
 
-  console.log(new_content);
-  //webix.message(new_message, null, 2);
   gAttachDoc = [];
   webix.ajax().post("/send",{message:new_message,content:new_content,msguid:this_uid},function(text,data,xmlHttpRequest){
-    console.log(text);
-    console.log(xmlHttpRequest);
     if(xmlHttpRequest.readyState == 4 && xmlHttpRequest.status == 200){
       $$('popupwin').close();
       if (this_message != undefined && this_message['folder'] == 3) {
@@ -52,7 +43,6 @@ function send() {
         this_message['flags'] = "\\Sent";
         var newData = $$('$datatable1');
         var sel = newData.getSelectedId(true);
-        console.log(this_message);
         newData.updateItem = (sel , this_message);
         var selectedTree = $$("$tree1").getSelectedId();
         $$("$tree1").select(1);
@@ -90,7 +80,6 @@ function saveDraft(){
           $$("$datatable1").updateItem(selItem,this_msg);
         else {
           gData.push(this_msg);
-          console.log(this_msg);
           $$("$datatable1").add(this_msg);
         }
 
@@ -111,7 +100,6 @@ function upload(){
 function uploadDoc(){
   var items = $$('fileview').getSelectedItem(true);
   gAttachDoc = items;
-  console.log(gAttachDoc);
   $$('mailform').removeView('attachViewValue');
   for(var i=0;i<gAttachDoc.length;i++){
     $$('mailform').addView({
@@ -133,7 +121,6 @@ function uploadDoc(){
     var trash = trashAttachment[i];
     trash.addEventListener('click',function(){
       var thisfilename = this.parentElement.innerHTML;
-      console.log(thisfilename);
     })
   }
 }
@@ -152,7 +139,6 @@ function findContent(messageId){
 }
 function findAttachment(msguid){
   var attachment = [];
-  console.log(msguid);
 
   for(var i=0;i<gAttachments.length;i++){
     if(gAttachments[i]['uid'] == msguid){
@@ -189,7 +175,6 @@ var gridtable = {
     },
     data:gData,
     ready:function(){
-      console.log(gData);
       //this.sort("date", "desc", "date");
       //this.markSorting("date", "desc");
     }};
@@ -332,10 +317,10 @@ var form = {
     {
       margin:5,
       cols:[
-        { view:"button", id:'id_cancelpopup', value:"cancel",click:"console.log('popwin close');$$('popupwin').close();"},
+        { view:"button", id:'id_cancelpopup', value:"cancel",click:"$$('popupwin').close();"},
         {view:"button",id:"id_saveDraft",value:"Save",click:saveDraft},
         { view:"button", value:"send",click:function(){
-          console.log($$("reply-address").validate());
+          $$("reply-address").validate();
           //if($$('reply-address').validate()){
           //  send();
           //}
@@ -458,7 +443,6 @@ function next_page(){
 
 /*------------------ attachments popup -------------------------------------------------------*/
 function loadDocument(fileName){
-  console.log(fileName);
   webix.ui(attachmentPopup).show();
   var iframe = '<iframe src="/viewer/#/attachments/'+fileName+'" width="100%" height="100%"></iframe>';
   $$('attachmentview').setHTML(iframe);
@@ -468,8 +452,6 @@ function loadDocument(fileName){
 function setupDocLoad() {
   var x = document.getElementsByClassName("attachment-icon");
   for(var i = 0; i < x.length; i++){
-    console.log('x node');
-    console.log(x[i]);
     x[i].setAttribute("onclick", "loadDocument(this.parentElement.getAttribute(\'name\'))");
   }
 }
@@ -498,7 +480,6 @@ webix.ready(function() {
         if(newmessages.length>0){
           for(var i=0;i<newmessages.length;i++){
             gData.push(newmessages[i]);
-            console.log(newmessages[i]);
             $$("$datatable1").add(newmessages[i]);
           }
           webix.message('new mails comming!');
@@ -517,31 +498,24 @@ webix.ready(function() {
   $$("$datatable1").attachEvent("onAfterSelect",function(obj){
     $$("id_reply").show();
     $$("id_delete").show();
-    console.log(obj);
     var this_content = findContent(obj.id);
-    console.log(this_content);
     if (this_content['flags'].indexOf("\\Seen") === -1 && this_content['flags'].indexOf("\\localDraft") === -1) {
-      console.log(this_content);
-      console.log('unseen to seen');
       this_content['from'] = replaceBold(this_content['from']);
       this_content['subject'] = replaceBold(this_content['subject']);
       this_content['date'] = replaceBold(this_content['date']);
       var newData = $$('$datatable1');
       var sel = newData.getSelectedId(true);
-      console.log(this_content);
       newData.updateItem = (sel , this_content);
     }
     webix.ajax().post("/message?id="+this_content['uid'],function(text,data,XmlHttpRequest){
       if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200) {
         var messageObj = JSON.parse(text);
         var contentHtml = messageObj['text'];
-        console.log(messageObj['attachments']);
         if(messageObj['attachments'] != undefined) {
           if (messageObj['attachments'].length > 0) {
             var spaces = "<br/><br/><br/>";
             var icon = "";
             for (var i = 0; i < messageObj['attachments'].length; i++) {
-              console.log(messageObj['attachments'][i]['fileName'])
               icon += "<div name=" + messageObj['attachments'][i]['fileName'].replace(/ /g,"_") + ">";
               icon += "<span class='webix_icon attachment-icon fa-file-archive-o fa-4x'>";
               icon += messageObj['attachments'][i]['generatedFileName'].replace(/ /g,"_") + "</span></div><br/>";
@@ -608,7 +582,6 @@ webix.ready(function() {
    * create email
    */
   $$("id_create").attachEvent("onItemClick",function(id,e){
-    console.log('create clicked');
     $$("$datatable1").clearSelection();
     webix.ui(popup).show();
   })
@@ -618,12 +591,10 @@ webix.ready(function() {
    */
   $$("id_reply").attachEvent("onItemClick",function(id,e){
     webix.ui(popup).show();
-    console.log($$('$datatable1').getSelectedId().id);
     var this_obj = findContent($$('$datatable1').getSelectedId().id);
     var replyTo = this_obj.from;
     var subject = this_obj.subject;
     if(subject.indexOf('Re: ') != -1 || subject.indexOf('RE ' != -1)){
-      console.log('has re');
       subject = subject.replace(/Re: /ig,'');
     }
     subject = "Re: "+subject;
@@ -632,7 +603,6 @@ webix.ready(function() {
       replyTo = replyTo.substr(0, replyTo.length - 1);
     }
 
-    console.log(replyTo);
     $$("reply-address").setValue(replyTo);
     $$("subject").setValue(subject);
   })
@@ -642,8 +612,6 @@ webix.ready(function() {
    */
   $$('id_delete').attachEvent('onItemClick',function(id,e){
     var this_msg = findContent($$('$datatable1').getSelectedId());
-    console.log(this_msg['uid']);
-    console.log('flag is:',this_msg['flags']);
     this_msg['flags'] = this_msg['flags']+"\\Deleted";
     this_msg['folder'] = 4;
     var newData = $$('$datatable1');
@@ -653,7 +621,6 @@ webix.ready(function() {
     $$("$tree1").select(4);
     $$("$tree1").select(selectedTree);
     webix.ajax().put("/message",{message:this_msg},function(text, data, XmlHttpRequest){
-      console.log('delete message'+text);
       if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200){
         webix.message('deleted success',null,200);
       }
@@ -662,7 +629,6 @@ webix.ready(function() {
 
 
   $$('id_cancelpopup').attachEvent('onItemClick',function(){
-    console.log('popwin close');
     $$('popupwin').close();
   })
 
