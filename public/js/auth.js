@@ -14,31 +14,60 @@ var contentUI = {
           scroll:"y",
           elements:[
             { rows:[
-              { template:"Identification", type:"section"},
-              { id:"id_mailboxname", view:"text", label:"ACCOUNT LABEL",labelWidth:200 },
-              {id:"id_imapuserid",view:"text",label:"EMAIL ADDRESS",labelWidth:200},
-              {id:"id_imap_userpass",view:"text",label:"PASSWORD",labelWidth:200},
-            ]},
-            { rows:[
               { template:"Receiving Server", type:"section"},
-              {id:"id_imaphost",view:"text",label:"IMAP SERVER",labelWidth:200},
-              {id:"id_imapport",view:"text",label:"PORT",labelWidth:200},
-              {view:"checkbox", id:"id_tls", label:"USE TLS", value:1},
+              {id:"id_mailboxname",view:"text",name:"mailboxname",label:"IMAP Name",labelWidth:200,
+                invalidMessage: "Mailbox name cannot be empty"},
+              {id:"id_imapuser",view:"text",name:"imapuser",label:"IMAP User",labelWidth:200,
+                invalidMessage: "IMAP email address cannot be empty"},
+              {id:"id_imappass",view:"text",name:"imappass",label:"IMAP Password",labelWidth:200,
+                invalidMessage: "IMAP uer password cannot be empty"},
+              {id:"id_imaphost",view:"text",name:"imaphost",label:"IMAP SERVER",labelWidth:200,
+                invalidMessage: "IMAP host cannot be empty"},
+              {id:"id_imapport",view:"text",name:"imapport",label:"PORT",labelWidth:200,
+                invalidMessage: "IMAP port cannot be empty"},
+              {view:"checkbox", id:"id_imaptls", label:"USE TLS", value:1}
             ]},
             { rows:[
               { template:"Sending Server", type:"section"},
-              {id:"id_smtphost",view:"text",label:"SMTP SERVER",labelWidth:200},
-              {id:"id_smtpport",view:"text",label:"PORT",labelWidth:200},
+              {id:"id_smtpmailbox",view:"text",name:"smtpmailbox",label:"SMTP Name",labelWidth:200,
+                invalidMessage: "SMTP mailbox name cannot be empty"},
+              {id:"id_smtpuser",view:"text",name:"smtpuser",label:"SMTP User",labelWidth:200,
+                invalidMessage: "SMTP address cannot be empty"},
+              {id:"id_smtppass",view:"text",name:"smtppass",label:"SMTP Password",labelWidth:200,
+                invalidMessage: "SMTP password cannot be empty"},
+              {id:"id_smtphost",view:"text",name:"smtphost",label:"SMTP SERVER",labelWidth:200,
+                invalidMessage: "SMTP host cannot be empty"},
+              {id:"id_smtpport",view:"text",name:"smtpport",label:"SMTP PORT",labelWidth:200,
+                invalidMessage: "SMTP port cannot be empty"}
             ]},
-            { rows:[
-              { template:"Activation", type:"section"},
-            { id:"idfield", view:"text", label:"ID" },
-            ]},
-            { margin:5, cols:[
-              { view:"button", value:"ACTIVATE" , type:"form",click:onActivateClick},
-              { view:"button", value:"Use Server Configuration",click:onActivateClick}
-            ]},
-          ]
+            //{ rows:[
+              //{ template:"Activation", type:"section"},
+            { id:"id_field", view:"text", name:"activation",label:"ID",
+              required:true,
+              validate:webix.rules.isNotEmpty,
+              invalidMessage: "Activation code cannot be empty"},
+            //]},
+            { margin:10, cols:[
+              { view:"button", value:"ACTIVATE" , click:onActivateClick},
+              { view:"button", value:"Use Server Configuration",click:function(){
+                if($$("id_field").validate()){
+                  webix.send('/auth',{"userID":$$("id_field").getValue()},"GET");
+                }
+              }}
+            ]}
+          ],
+          rules:{
+            "mailboxname":webix.rules.isNotEmpty,
+            "imapuser":webix.rules.isEmail,
+            "imappass":webix.rules.isNotEmpty,
+            "imaphost":webix.rules.isNotEmpty,
+            "imapport":webix.rules.isNotEmpty,
+            "smtpmailbox":webix.rules.isNotEmpty,
+            "smtpuser":webix.rules.isEmail,
+            "smtppass":webix.rules.isNotEmpty,
+            "smtphost":webix.rules.isNotEmpty,
+            "smtpport":webix.rules.isNotEmpty
+          }
         },
         {}
       ]
@@ -48,7 +77,27 @@ var contentUI = {
 };
 
 function onActivateClick(){
-  webix.send('/auth',{"userID":$$("idfield").getValue()},"GET");
+  var accountObj = {
+    mailboxname:$$('id_mailboxname').getValue(),
+    imaphost:$$('id_imaphost').getValue(),
+    imapuserid:$$('id_imapuser').getValue(),
+    imapuserpass:$$('id_imappass').getValue(),
+    imapport:$$('id_imapport').getValue(),
+    imaptls:$$('id_imaptls').getValue(),
+    userName:$$('id_smtpmailbox').getValue(),
+    smtpLogin:$$('id_smtpuser').getValue(),
+    smtpPass:$$('id_smtppass').getValue(),
+    smtpServer:$$('id_smtphost').getValue(),
+    smtpPort:$$('id_smtpport').getValue()
+  }
+  console.log(accountObj);
+  if($$('idform').validate()){
+    webix.send('auth',{account:accountObj},"GET");
+  }
+  //if($$('idform').validate()){
+  //  webix.send('auth',{})
+  //}
+
 }
 
 function onCancelClick(){

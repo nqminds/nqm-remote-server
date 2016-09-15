@@ -187,12 +187,9 @@ module.exports = (function() {
 
     var mailparser = new MailParser();
     mailparser.on("end", function (mail_object) {
-      createFolder('attachments');
       if (mail_object.attachments != undefined) {
         mail_object.attachments.forEach(function (attachment) {
           log('attachments', attachment.fileName);
-          //var output = fs.createWriteStream(path.join(__dirname, 'public/attachments/' + attachment.fileName.replace(/ /g,"_")));
-          //attachment.stream.pipe(output);
           fs.writeFileSync(path.join(__dirname, 'public/attachments/' + attachment.fileName.replace(/ /g,"_")),attachment.content);
         });
         mailObj['attachments'] = mail_object['attachments'];

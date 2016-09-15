@@ -57,7 +57,7 @@ webix.ready(function() {
         view:"toolbar",
         height: 45,
         elements: [
-          { view: "label", id:"id_main",template: "<div id='picoHeader'><span class='picoHeaderTitle'>SECD</span>",click:onMainClick},
+          { view: "label", id:"id_main",template: "<div style='cursor:pointer';id='picoHeader'><span class='picoHeaderTitle'>SECD</span>",click:onMainClick},
           {
             id:         "docButton",
             view:       "button",

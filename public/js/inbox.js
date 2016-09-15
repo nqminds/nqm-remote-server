@@ -201,7 +201,9 @@ var contentUI = {rows:[
         view:"toolbar",
         height: 45,
         elements: [
-          { view: "label", template: "<div id='picoHeader'><span class='picoHeaderTitle'>SECD</span>"},
+          { view: "label", template: "<div style='cursor:pointer;',id='picoHeader'><span class='picoHeaderTitle'>SECD</span>",click:function(){
+            webix.send('/',null,"GET");
+          }},
           {
             id:         "docButton",
             view:       "button",
@@ -333,9 +335,10 @@ var form = {
         { view:"button", id:'id_cancelpopup', value:"cancel",click:"console.log('popwin close');$$('popupwin').close();"},
         {view:"button",id:"id_saveDraft",value:"Save",click:saveDraft},
         { view:"button", value:"send",click:function(){
-          if($$('reply-address').validate()){
-            send();
-          }
+          console.log($$("reply-address").validate());
+          //if($$('reply-address').validate()){
+          //  send();
+          //}
         }}
       ]
     }
