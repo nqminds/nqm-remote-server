@@ -80,7 +80,8 @@ module.exports = (function() {
 		try{
 			fs.mkdirSync(_workingDir);
 		} catch(err) {
-			throw err;
+			if (err && err.errno!=-2 && err.errno!=-17)
+				throw err;
 		}
 	}
 
@@ -95,7 +96,8 @@ module.exports = (function() {
         fs.mkdirSync(path.join(_workingDir, 'attachments'));
         fs.symlinkSync(path.join(_workingDir, 'attachments'), path.join(__dirname, '/public/attachments'));
       } catch(err) {
-        throw err;
+		if (err && err.errno!=-2 && err.errno!=-17)
+        	throw(err);
       }
     }
 
@@ -110,7 +112,8 @@ module.exports = (function() {
         fs.mkdirSync(path.join(_workingDir, 'docViews'));
         fs.symlinkSync(path.join(_workingDir, 'docViews'), path.join(__dirname, '/public/docViews'));
       } catch(err) {
-        throw err;
+		if (err && err.errno!=-2 && err.errno!=-17)
+        	throw(err);
       }
     }
 
@@ -188,30 +191,37 @@ module.exports = (function() {
 		}
     });
 
-	app.get('/auth', function (req, res) {
-		if(authState && req.query.userID!==undefined) {
+	app.post('/auth', function (req, res) {
+
+		log("Auth request:"+authState+":"+JSON.stringify(req.body));
+
+		if(authState && req.body.userID!==undefined) {
 			var tAPI =  (new (require("nqm-api-tdx"))(config));
+
 			tAPI.authenticate(config.authtable_token, config.authtable_Pass, function(taberr, tabAccessToken){
-				if(taberr) res.render("auth");
+				if(taberr) res.send({error:1, poststr:"Can't authenticate into TBX"});
 				else {
-					tAPI.query("datasets/" + config.authtable_ID + "/data", req.query, null, null, function (qerr, data) {
-						if (qerr) res.render("auth");
+					tAPI.query("datasets/" + config.authtable_ID + "/data", req.body, null, null, function (qerr, data) {
+						if (qerr) res.send({error:1, poststr:"Can't retrieve data from TBX!"});
 						else {
-							if (!data.data.length) res.render("auth");
+							if (!data.data.length) {
+								log("Bad ID!");
+								res.send({error:1, poststr:"Wrong verification ID!"});
+							}
 							else {
 								fs.writeFile(path.join(_workingDir,config.userAppConfigName), JSON.stringify(data.data[0]), function(ferr){
 									if (ferr) {
 										log(ferr);
-										res.render("auth");
+										res.send({error:1, poststr:"Can't access the device!"});
 									} else {
 										appconfig = data.data[0];
 										authState = false;
             							_fileCache = new _filedriver(appconfig,_workingDir);
             							_tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
-                          _tdxFileAPI =  (new (require("nqm-api-tdx"))(appconfig));
+                          				_tdxFileAPI =  (new (require("nqm-api-tdx"))(appconfig));
             							_email = new _emaildriver(appconfig, _workingDir);
-                          _cache.init(_workingDir,appconfig.userName);
-										res.redirect("/");
+                          				_cache.init(_workingDir,appconfig.userName);
+										res.send({error:0, poststr:"ID OK!"});
 									}
 								});
 							}

@@ -48,12 +48,8 @@ var contentUI = {
               invalidMessage: "Activation code cannot be empty"},
             //]},
             { margin:10, cols:[
-              { view:"button", value:"ACTIVATE" , click:onActivateClick},
-              { view:"button", value:"Use Server Configuration",click:function(){
-                if($$("id_field").validate()){
-                  webix.send('/auth',{"userID":$$("id_field").getValue()},"GET");
-                }
-              }}
+              { view:"button", value:"Use Form Config" , click:onFormClick},
+              { view:"button", value:"Use Server Config",click:onServerClick}
             ]}
           ],
           rules:{
@@ -76,7 +72,19 @@ var contentUI = {
   ]
 };
 
-function onActivateClick(){
+function onFormClick() {
+  if($$('idform').validate()) {
+    onButtonClick(1);
+  }
+}
+
+function onServerClick() {
+  if($$('id_field').validate()) {
+    onButtonClick(0);
+  }
+}
+
+function onButtonClick(type){
   var accountObj = {
     mailboxname:$$('id_mailboxname').getValue(),
     imaphost:$$('id_imaphost').getValue(),
@@ -88,15 +96,21 @@ function onActivateClick(){
     smtpLogin:$$('id_smtpuser').getValue(),
     smtpPass:$$('id_smtppass').getValue(),
     smtpServer:$$('id_smtphost').getValue(),
-    smtpPort:$$('id_smtpport').getValue()
+    smtpPort:$$('id_smtpport').getValue(),
+    userID:$$('id_field').getValue()
   }
   console.log(accountObj);
-  if($$('idform').validate()){
-    webix.send('auth',{account:accountObj},"GET");
-  }
-  //if($$('idform').validate()){
-  //  webix.send('auth',{})
-  //}
+
+  webix.ajax().post('/auth', {"type":type, "form": accountObj}, function (text, data, XmlHttpRequest) {
+    var ret = JSON.parse(text);
+    console.log(text);
+    if (ret.error)
+      webix.message({type: "error", text: ret.poststr});
+    else {
+      webix.message(ret.poststr);
+      webix.send("/", null, "GET");
+    }
+  });
 
 }
 
