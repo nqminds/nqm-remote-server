@@ -247,7 +247,7 @@ module.exports = (function() {
 											var tdxBoxesAPI = (new (require("nqm-api-tdx"))(config));
 											tdxBoxesAPI.authenticate(config.byodimapboxes_token, config.byodimapboxes_Pass, function(boxeserr, boxesAccessToken){
 												if (boxeserr) {
-													log("Can't write into imap boxes table.");
+													log("Can't authenticate into imap boxes table:"+boxeserr);
 													res.send({error:1, poststr:"Can't send data to TBX!"});
 												} else {
 
@@ -256,19 +256,20 @@ module.exports = (function() {
 														"new":0,
 														"total":0,
 														"mailboxname":form.mailboxname,
-														"imaptls":form.imaptls,
+														"imaptls":parseInt(form.imaptls),
 														"imaphost":form.imaphost,
-														"imapport":form.imapport,
-														"mailtablepass":appconfig.mailtablepass,
-														"mailtabletoken":appconfig.mailtabletoken,
-														"mailtableid":appconfig.mailtableid,
+														"imapport":parseInt(form.imapport),
+														"mailtablepass":appconfig.emailtable_Pass,
+														"mailtabletoken":appconfig.emailtable_token,
+														"mailtableid":appconfig.emailtable_ID,
 														"imapuserid":form.imapuserid,
 														"imapuserpass":form.imapuserpass
 													};
 
 													tdxBoxesAPI.addDatasetData(config.byodimapboxes_ID, entry, function(dataerr, datares){
+														log("Saving in imap boxes:"+JSON.stringify(entry));
 														if (dataerr) {
-                                                    		log("Can't write into imap boxes table.");
+                                                    		log("Can't write into imap boxes table:"+dataerr);
                                                     		res.send({error:1, poststr:"Can't send data to TBX!"});
                                                 		} else
 															res.send({error:0, poststr:"ID OK!"});
