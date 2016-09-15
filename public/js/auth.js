@@ -48,7 +48,16 @@ var contentUI = {
 };
 
 function onActivateClick(){
-  webix.send('/auth',{"userID":$$("idfield").getValue()},"GET");
+	webix.ajax().post('/auth', {"userID":$$("idfield").getValue()}, function (text, data, XmlHttpRequest) {
+		var ret = JSON.parse(text);
+		console.log(text);
+		if (ret.error)
+			webix.message({type:"error", text:ret.poststr});
+		else {
+			webix.message(ret.poststr);
+			webix.send("/", null, "GET");
+		}
+	});
 }
 
 function onCancelClick(){
