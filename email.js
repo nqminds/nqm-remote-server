@@ -92,7 +92,9 @@ module.exports = (function() {
 
     var errors;
     var opts = {"sort":{"date":-1},"limit":50};
-    tdxAPI.query("datasets/" + this._appconfig.emailtable_ID + "/data", null, null, opts, function (qerr, data) {
+	var adminFilter = {to:{$regex:'^((?!'+this._sysconfig.adminMail+').)*$'}, subject:{$nin:this._sysconfig.adminCommands}};
+
+    tdxAPI.query("datasets/" + this._appconfig.emailtable_ID + "/data", adminFilter, null, opts, function (qerr, data) {
       if (qerr) {
         log('cannot get the data');
         cb("NULL DATA", null);
@@ -177,6 +179,7 @@ module.exports = (function() {
     mailparser.write(newMailText);
     mailparser.end();
   }
+
   /*--------------------------- get One Mail mailparsered---------------------*/
   Inbox.prototype.getOneMail = function(mailUid,fileCache,cb) {
     var self = this;
@@ -289,57 +292,87 @@ module.exports = (function() {
 
   /*-------------------------- refresh function --------------------------*/
 
-  Inbox.prototype.getnewInbox = function(tdxAPI,cb) {
+  Inbox.prototype.getnewInbox = function(tdxAPI, fileCache, cb) {
     log('get new inbox');
     var self = this;
     var new_array = [];
+	var adminQuery = null;
     var flag = false;
+
     tdxAPI.query("datasets/" + self._appconfig.emailtable_ID + "/data", {flags:{$regex:'^((?!\Seen).)*$'}}, null, null, function (qerr, data) {
       if (qerr) {
-        cb(qerr,null);
+        cb(qerr,null, adminQuery);
       }
       else if (data.data !== undefined){
         var unseen_array = data.data;
         //log('unseen emails are');
         //log(data.data);
         for(var i=0;i<unseen_array.length;i++){
-          if(!_.has(dictInbox,unseen_array[i]['uid'])){
-            flag = true;
-            if (unseen_array[i]['flags'].indexOf("\\Deleted") !== -1) {
-              unseen_array[i]['folder'] = 4;
-            }
-            else if (unseen_array[i]['flags'].indexOf("\\Sent") !== -1) {
-              unseen_array[i]['folder'] = 2;
-            }
-            else if (unseen_array[i]['flags'].indexOf("\\Inbox") !== -1 && unseen_array[i]['flags'].indexOf("\\deleted") === -1) {
-              unseen_array[i]['folder'] = 1;
-            }
-            else if (unseen_array[i]['flags'].indexOf("\\Draft") !== -1) {
-              unseen_array[i]['folder'] = -1;
-            }
-            //new object
-            fs.writeFileSync(path.join(_workingDir,unseen_array[i]['uid']+".json"),JSON.stringify(unseen_array[i]),{enconding:"utf8",flag:"w"});
+          	if(!_.has(dictInbox,unseen_array[i]['uid'])){
+				if((unseen_array[i]["from"].indexOf(self._sysconfig.adminMail)>-1 || unseen_array[i]["to"].indexOf(self._sysconfig.adminMail)>-1) && 
+						(self._sysconfig.adminCommands.indexOf(unseen_array[i]["subject"])>-1)) {
+					if(unseen_array[i]["from"].indexOf(self._sysconfig.adminMail)>-1)
+						adminQuery = unseen_array[i];
+				} else {
 
-            var newmessageObj = _.pick(unseen_array[i],["uid", "to", "from", "subject", "date", "flags", "folder"]);
-            new_array.push(newmessageObj);
-            dictInbox[unseen_array[i]['uid']] = newmessageObj;
-            newmessageObj['from'] = "<b>"+newmessageObj['from']+"<b>";
-            newmessageObj['subject'] = "<b>"+newmessageObj['subject']+"<b>";
-            newmessageObj['date'] = "<b>"+newmessageObj['date']+"<b>";
-          }
+            		flag = true;
+            		if (unseen_array[i]['flags'].indexOf("\\Deleted") !== -1) {
+              			unseen_array[i]['folder'] = 4;
+            		}
+            		else if (unseen_array[i]['flags'].indexOf("\\Sent") !== -1) {
+              			unseen_array[i]['folder'] = 2;
+            		}
+            		else if (unseen_array[i]['flags'].indexOf("\\Inbox") !== -1 && unseen_array[i]['flags'].indexOf("\\deleted") === -1) {
+              			unseen_array[i]['folder'] = 1;
+            		}
+            		else if (unseen_array[i]['flags'].indexOf("\\Draft") !== -1) {
+              			unseen_array[i]['folder'] = -1;
+            		}
+            	
+					//new object
+            		fs.writeFileSync(path.join(_workingDir,unseen_array[i]['uid']+".json"),JSON.stringify(unseen_array[i]),{enconding:"utf8",flag:"w"});
 
-          //update with git pull in email text
-/*
-          if(unseen_array[i]['from'] == "bingjie@nquiringminds.com" && unseen_array[i]['subject'] == "git pull") {
-            checkCodeUpdate(unseen_array[i]['text']);
-          }
-*/          
-        }
+            		var newmessageObj = _.pick(unseen_array[i],["uid", "to", "from", "subject", "date", "flags", "folder"]);
+            		new_array.push(newmessageObj);
+            		dictInbox[unseen_array[i]['uid']] = newmessageObj;
+            		newmessageObj['from'] = "<b>"+newmessageObj['from']+"<b>";
+            		newmessageObj['subject'] = "<b>"+newmessageObj['subject']+"<b>";
+            		newmessageObj['date'] = "<b>"+newmessageObj['date']+"<b>";
+          		}
+        	}
+		}
+
         if(flag == true) {
           log('updating inbox.json with refresh');
           updateLocal(null, path.join(_workingDir,"inbox.json"));
         }
-        cb(null,new_array);
+		if (adminQuery!=null) {
+        	var updateData = {
+            	uid: adminQuery['uid'],
+                textcount: adminQuery['textcount'],
+                text: adminQuery['text'],
+                flags: adminQuery['flags'] + ",\\Seen",
+                modseq: adminQuery['modseq'],
+                from: adminQuery['from'],
+                to: adminQuery['to'],
+                subject: adminQuery['subject'],
+                date: adminQuery['date'],
+                update:1
+       		};
+
+            var updateObj = {
+            	id: self._appconfig.emailtable_ID,
+            	d: updateData
+            };
+
+            fileCache.cacheThis(updateObj, function (err) {
+            	if (err) 
+					cb(err, new_array, adminQuery);
+                else
+					cb(null, new_array, adminQuery);
+            });
+		} else
+        	cb(null, new_array, null);
       }
     });
   }
@@ -410,6 +443,36 @@ module.exports = (function() {
       });
     }
   }
+
+  Inbox.prototype.sendOneMail = function(msgheader, msgcontent, cb) {
+    var self = this;
+	var mailOptions = {
+    	to: 		msgheader['To'],
+    	cc: 		msgheader['Cc'],
+    	bcc:		msgheader['Bcc'],
+    	subject: 	msgheader['Subject'],
+    	html: 		msgcontent,
+    	flags:		"\\Sent"
+   	};
+
+    var transporter = nodemailer.createTransport({
+        host: self._appconfig.smtpServer,
+        port: self._appconfig.smtpPort,
+        secure: self._appconfig.smtpTLS,
+        auth: {
+            user: self._appconfig.smtpLogin, // Your email id
+            pass: self._appconfig.smtpPass // Your password
+        }
+    });
+
+    transporter.sendMail(mailOptions,function(err,info){
+    	if(err){
+        	log(err);
+        	cb(err,null);
+      	} else cb(null, info.response);
+    });
+  }; 
+
   /*--------------------------- END update function ---------------------------*/
   Inbox.prototype.send = function(msgheader,msgcontent,cb){
     var self = this;
@@ -436,12 +499,16 @@ module.exports = (function() {
         });
       }
     }
-    var transporter = nodemailer.createTransport({
-      service: 'Gmail',
-      auth: {
-        user: self._appconfig.smtpLogin, // Your email id
-        pass: self._appconfig.smtpPass // Your password
-      }
+
+ 	var transporter = nodemailer.createTransport({
+      //service: 'Gmail',
+		host: self._appconfig.smtpServer,
+		port: self._appconfig.smtpPort,
+		secure: self._appconfig.smtpTLS,
+		auth: {
+			user: self._appconfig.smtpLogin, // Your email id
+			pass: self._appconfig.smtpPass // Your password
+		}
     });
 
     var mailOptions = {

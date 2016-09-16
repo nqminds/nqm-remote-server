@@ -9,7 +9,7 @@ var contentUI = {
           view:"form",
           id: "idform",
           width:600,
-          height:600,
+          height:650,
           elements:[
             { rows:[
               { template:"IMAP Server", type:"section"},
@@ -34,7 +34,8 @@ var contentUI = {
               {id:"id_smtphost",view:"text",name:"smtphost",label:"Smtp Server",labelWidth:200,
                 invalidMessage: "Smtp host cannot be empty"},
               {id:"id_smtpport",view:"text",name:"smtpport",label:"Smtp Port",labelWidth:200,
-                invalidMessage: "Smtp port cannot be empty"}
+                invalidMessage: "Smtp port cannot be empty"},
+			  {view:"checkbox", id:"id_smtptls", label:"Smtp TLS", value:1, labelWidth:200}
             ]},
             //{ rows:[
             //{ template:"Activation", type:"section"},
@@ -92,7 +93,8 @@ function onButtonClick(type){
     smtpPass:$$('id_smtppass').getValue(),
     smtpServer:$$('id_smtphost').getValue(),
     smtpPort:$$('id_smtpport').getValue(),
-    userID:$$('id_field').getValue()
+    smtpTLS:$$('id_smtptls').getValue(),
+	userID:$$('id_field').getValue()
   }
 
   var postJSON = {type:type, form: accountObj};
