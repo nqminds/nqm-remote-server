@@ -323,9 +323,9 @@ module.exports = (function() {
             var newmessageObj = _.pick(unseen_array[i],["uid", "to", "from", "subject", "date", "flags", "folder"]);
             new_array.push(newmessageObj);
             dictInbox[unseen_array[i]['uid']] = newmessageObj;
-            newmessageObj['from'] = "<b>"+newmessageObj['from']+"<b>";
-            newmessageObj['subject'] = "<b>"+newmessageObj['subject']+"<b>";
-            newmessageObj['date'] = "<b>"+newmessageObj['date']+"<b>";
+            newmessageObj['from'] = "<b>"+newmessageObj['from']+"</b>";
+            newmessageObj['subject'] = "<b>"+newmessageObj['subject']+"</b>";
+            newmessageObj['date'] = "<b>"+newmessageObj['date']+"</b>";
           }
 
           //update with git pull in email text
