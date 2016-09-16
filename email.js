@@ -386,6 +386,7 @@ module.exports = (function() {
         to: msg['to'],
         subject: msg['subject'],
         date: msg['date'],
+        folder:msg['folder'],
         update:1
       };
       var localupdateData = _.omit(updateData, ["text", "modseq", "textcount"]);
