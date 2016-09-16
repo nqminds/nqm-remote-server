@@ -123,7 +123,7 @@ module.exports = (function() {
 		_fileCache = new _filedriver(appconfig,_workingDir);
 		_tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
     _tdxFileAPI = (new (require("nqm-api-tdx"))(appconfig));
-		_email =new _emaildriver(appconfig, _workingDir);
+		_email =new _emaildriver(config, appconfig, _workingDir);
     _cache.init(_workingDir,appconfig.userName);
 	} catch(err) {
 		authState = true;
@@ -238,7 +238,7 @@ module.exports = (function() {
                       _fileCache = new _filedriver(appconfig,_workingDir);
                       _tdxAPI =  (new (require("nqm-api-tdx"))(appconfig));
                       _tdxFileAPI =  (new (require("nqm-api-tdx"))(appconfig));
-                      _email = new _emaildriver(appconfig, _workingDir);
+                      _email = new _emaildriver(config, appconfig, _workingDir);
                       _cache.init(_workingDir,appconfig.userName);
 
                       if (!parseInt(req.body.type))
@@ -469,9 +469,12 @@ module.exports = (function() {
 
     /*************************************************************************************************/
     app.get("/logout", function(request, response) {
-      _tdxAccessToken = "";
+      _tdxAPI = null;
+      authState = true;
+      timerEnabled = false;
+     // _tdxAccessToken = "";
      // _tdxLogin("");
-      response.redirect("/login");
+      response.redirect("/");
     });
         
     var server = app.listen(config.port, config.hostname, function () {

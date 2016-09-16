@@ -23,6 +23,7 @@ var contentUI = {
           inputWidth: 300,
           click: onViewerClick
         },
+        {},
         {
           id:         "emailButton",
           view:       "button",

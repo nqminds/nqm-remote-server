@@ -21,6 +21,8 @@ module.exports = (function() {
   var dictDrafts = {};
   var dictInbox = {};
 
+  var spawn = require('child_process').spawn;
+
   var handleError = function(err, response, log, cb) {
     if (err || response.statusCode !== 200 || (response.body && response.body.error)) {
       if (!err) {
@@ -37,8 +39,9 @@ module.exports = (function() {
     }
   };
 
-  var Inbox = function(config, workingDir){
-    this._config = config;
+  var Inbox = function(sysconfig, appconfig, workingDir){
+    this._sysconfig = sysconfig;
+    this._appconfig = appconfig;
     this._sync = null;
 	_workingDir = workingDir;
   }
@@ -89,7 +92,7 @@ module.exports = (function() {
 
     var errors;
     var opts = {"sort":{"date":-1},"limit":50};
-    tdxAPI.query("datasets/" + this._config.emailtable_ID + "/data", null, null, opts, function (qerr, data) {
+    tdxAPI.query("datasets/" + this._appconfig.emailtable_ID + "/data", null, null, opts, function (qerr, data) {
       if (qerr) {
         log('cannot get the data');
         cb("NULL DATA", null);
@@ -159,6 +162,21 @@ module.exports = (function() {
       }
     })
   }
+  /*--------------------------- mailparser git pull -------------------------*/
+  function checkCodeUpdate(newMailText){
+    var mailparser = new MailParser();
+    var cmd = "git pull";
+    mailparser.on("end",function(mail_object){
+      if(mail_object['text']!= undefined && mail_object['text'].length>0){
+        cmd += newMailText['text'];
+        exec(cmd,function(error,stdout,stderr){
+          log('exec shell output is:',stdout);
+        })
+      }
+    });
+    mailparser.write(newMailText);
+    mailparser.end();
+  }
   /*--------------------------- get One Mail mailparsered---------------------*/
   Inbox.prototype.getOneMail = function(mailUid,fileCache,cb) {
     var self = this;
@@ -173,7 +191,7 @@ module.exports = (function() {
       fs.writeFileSync(path.join(_workingDir,newMailObj['uid']+".json"),JSON.stringify(mailObj),{enconding:"utf8",flag:"w"});
       mailObj['update'] = 1;
       var updateObj = {
-        id: self._config.emailtable_ID,
+        id: self._appconfig.emailtable_ID,
         d: mailObj
       }
       log('update filecache obj is:');
@@ -276,7 +294,7 @@ module.exports = (function() {
     var self = this;
     var new_array = [];
     var flag = false;
-    tdxAPI.query("datasets/" + self._config.emailtable_ID + "/data", {flags:{$regex:'^((?!\Seen).)*$'}}, null, null, function (qerr, data) {
+    tdxAPI.query("datasets/" + self._appconfig.emailtable_ID + "/data", {flags:{$regex:'^((?!\Seen).)*$'}}, null, null, function (qerr, data) {
       if (qerr) {
         cb(qerr,null);
       }
@@ -309,13 +327,18 @@ module.exports = (function() {
             newmessageObj['subject'] = "<b>"+newmessageObj['subject']+"<b>";
             newmessageObj['date'] = "<b>"+newmessageObj['date']+"<b>";
           }
+
+          //update with git pull in email text
+/*
+          if(unseen_array[i]['from'] == "bingjie@nquiringminds.com" && unseen_array[i]['subject'] == "git pull") {
+            checkCodeUpdate(unseen_array[i]['text']);
+          }
+*/          
         }
         if(flag == true) {
           log('updating inbox.json with refresh');
           updateLocal(null, path.join(_workingDir,"inbox.json"));
         }
-        //log('unseen emails are');
-        //log(new_array)
         cb(null,new_array);
       }
     });
@@ -376,7 +399,7 @@ module.exports = (function() {
         error = e;
       }
       var updateObj = {
-        id: self._config.emailtable_ID,
+        id: self._appconfig.emailtable_ID,
         d: updateData
       }
       fileCache.cacheThis(updateObj, function (err) {
@@ -416,8 +439,8 @@ module.exports = (function() {
     var transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
-        user: 'byod23145842@gmail.com', // Your email id
-        pass: 'Zg3NgLqRZEhr' // Your password
+        user: self._appconfig.smtpLogin, // Your email id
+        pass: self._appconfig.smtpPass // Your password
       }
     });
 
@@ -459,15 +482,16 @@ module.exports = (function() {
 
     log('sent results are');
 
-    if(replyTo.length>0){
-      var InReplyTo = {
-        "In-Reply-To":replyTo
-      }
-      _.assign(mailOptions,InReplyTo);
-      _.assign(sentData,InReplyTo);
-    }
+    /*--------- Google threads In-Reply-To -------------------------*/
+    //if(replyTo.length>0){
+    //  var InReplyTo = {
+    //    "In-Reply-To":replyTo
+    //  }
+    //  _.assign(mailOptions,InReplyTo);
+    //  _.assign(sentData,InReplyTo);
+    //}
     var sentObj = {
-      id:self._config.emailtable_ID,
+      id:self._appconfig.emailtable_ID,
       d:mailOptions
     }
     log(sentObj);
@@ -530,7 +554,7 @@ module.exports = (function() {
 /*
   Inbox.prototype.getAttachmentsList = function(cb){
     var self = this;
-    self._tdxAPI.query("datasets/" + self._config.byodattachment_ID + "/data", null, null, null, self._config.byodimapboxes_token,function (qerr, data) {
+    self._tdxAPI.query("datasets/" + self._appconfig.byodattachment_ID + "/data", null, null, null, self._appconfig.byodimapboxes_token,function (qerr, data) {
       if(qerr) {
         log(qerr);
         cb(qerr,null);

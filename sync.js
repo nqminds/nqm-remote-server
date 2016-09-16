@@ -26,8 +26,8 @@ module.exports = (function(){
       var transporter = nodemailer.createTransport({
         service: 'Gmail',
         auth: {
-          user: 'byod23145842@gmail.com', // Your email id
-          pass: 'Zg3NgLqRZEhr' // Your password
+          user: this._config.smtpLogin, // Your email id
+          pass: this._config.smtpPass // Your password
         }
       });
       _.forEach(sentArray, function (element) {
@@ -39,14 +39,14 @@ module.exports = (function(){
           subject: element['subject'],
           html: element['text']
         }
-        if (element["In-Reply-To"]) {
-          if (element["In-Reply-To"].length > 0) {
-            var ReplyTo = {
-              "In-Reply-To": element["In-Reply-To"]
-            }
-            _.assign(mailOptions, ReplyTo);
-          }
-        }
+        //if (element["In-Reply-To"]) {
+        //  if (element["In-Reply-To"].length > 0) {
+        //    var ReplyTo = {
+        //      "In-Reply-To": element["In-Reply-To"]
+        //    }
+        //    _.assign(mailOptions, ReplyTo);
+        //  }
+        //}
         if (element['attachments']) {
           _.assign(mailOptions, {attachments: element['attachments']});
         }
@@ -154,7 +154,7 @@ module.exports = (function(){
     //log('deleted obj is: ');
     //log(updateData.payload);
 
-    sendEmail(upsertData.payload,function(err,ans){
+    sendEmail.call(self,upsertData.payload,function(err,ans){
       if(err) {
         log(err);
         cb(err, null)
