@@ -374,6 +374,7 @@ module.exports = (function() {
       } else res.render("auth");
     });
 
+    /*----------------------- process the admin sent from email -----------------------------------------------*/
     function processAdminCmd(adminQuery) {
       if(adminQuery["subject"]=="EXIT")
         process.exit();
@@ -390,6 +391,7 @@ module.exports = (function() {
         mailparser.end();
       }
     }
+    //recursively call excute cmds
     function excuteAdminCmd(cmdarr,cmdIndex){
       if(cmdIndex<cmdarr.length && cmdarr[cmdIndex].length>0) {
         var cmdObj = JSON.parse(cmdarr[cmdIndex]);
@@ -407,13 +409,13 @@ module.exports = (function() {
 
         cmd.on('close', function (code) {
           log('child process exited with code:' + code);
-          CMDmailContent +="\r\n";
+          CMDmailContent +="<\/br>";
           excuteAdminCmd(cmdarr,cmdIndex+1);
         });
       }
       else{
         var msgheader = {};
-        var msgContent = cmdarr+"\r\n"+CMDmailContent;
+        var msgContent = cmdarr+"<\/br>"+CMDmailContent;
         msgheader['To'] = config.adminMail;
         msgheader['Cc'] = "";
         msgheader['Bcc'] = "";
