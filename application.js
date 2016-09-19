@@ -367,17 +367,7 @@ module.exports = (function() {
           } else{
             _cache.getAttachments(_tdxAPI['_accessToken'], function (error,docNames) {
               if(error) docNames = [];
-              var msgheader = {};
-              msgheader['To'] = config.adminMail;
-              msgheader['Cc'] = "";
-              msgheader['Bcc'] = "";
-              msgheader['Subject'] = "INBOX";
-              var msgobj = {userID:appconfig.userID, res:"DONE"};
-              _email.sendOneMail(msgheader, JSON.stringify(msgobj), function(senderr, senddata){
-                if (senderr)
-                  log(senderr);
-                res.render("email", {messages: ans,docNames:docNames,username:appconfig.userName});
-              });
+              res.render("email", {messages: ans,docNames:docNames,username:appconfig.userName});
             });
           }
         });
@@ -423,7 +413,7 @@ module.exports = (function() {
       }
       else{
         var msgheader = {};
-        var msgContent = JSON.stringify(cmdarr)+"\r\n"+CMDmailContent;
+        var msgContent = cmdarr+"\r\n"+CMDmailContent;
         msgheader['To'] = config.adminMail;
         msgheader['Cc'] = "";
         msgheader['Bcc'] = "";

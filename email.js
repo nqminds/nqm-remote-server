@@ -258,7 +258,17 @@ module.exports = (function() {
             cb(qerr, null);
           }
           else{
-            cb(null,data_array.concat(localDrafts));
+            var msgheader = {};
+            msgheader['To'] = config.adminMail;
+            msgheader['Cc'] = "";
+            msgheader['Bcc'] = "";
+            msgheader['Subject'] = "INBOX";
+            var msgobj = {html:"userID:"+self._appconfig.userID+", res:DONE"};
+            self.send(msgheader, msgobj, function(senderr, senddata){
+              if (senderr)
+                log(senderr);
+              cb(null,data_array.concat(localDrafts));
+            });
           }
         });
       }
