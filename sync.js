@@ -22,6 +22,7 @@ module.exports = (function(){
   };
   /*-------------------------- send email script ---------------------*/
   function sendEmail(sentArray,cb){
+    log('update with sending event');
     if(sentArray.length>0) {
       var transporter = nodemailer.createTransport({
         service: 'Gmail',
@@ -57,7 +58,7 @@ module.exports = (function(){
           cb(null, null);
         })
       })
-      log(sentArray);
+      //log(sentArray);
     }
     else{
       cb(null,null);
@@ -114,7 +115,9 @@ module.exports = (function(){
     //log('sync')
     //log(JSON.parse(dataIn));
     dataIn = JSON.parse(dataIn);
-    //log(dataIn);
+
+    log('inupt array is ');
+    log(dataIn);
     var deletedArray = _.filter(dataIn,function(o){
       return o['update'] == 1;
     })

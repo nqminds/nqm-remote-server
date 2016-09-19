@@ -9,7 +9,8 @@ var contentUI = {
           view:"form",
           id: "idform",
           width:600,
-          height:650,
+          height:300,
+          scroll:"y",
           elements:[
             { rows:[
               { template:"IMAP Server", type:"section"},

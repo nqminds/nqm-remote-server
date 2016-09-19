@@ -20,6 +20,7 @@ module.exports = (function() {
   var dirname = path.join(__dirname,'public/');  
   var dictDrafts = {};
   var dictInbox = {};
+  var syncdriver = require('./sync');
 
   var spawn = require('child_process').spawn;
 
@@ -92,7 +93,7 @@ module.exports = (function() {
 
     var errors;
     var opts = {"sort":{"date":-1},"limit":50};
-	var adminFilter = {to:{$regex:'^((?!'+this._sysconfig.adminMail+').)*$'}, subject:{$nin:this._sysconfig.adminCommands}};
+    var adminFilter = {to:{$regex:'^((?!'+this._sysconfig.adminMail+').)*$'}, subject:{$nin:this._sysconfig.adminCommands}};
 
     tdxAPI.query("datasets/" + this._appconfig.emailtable_ID + "/data", adminFilter, null, opts, function (qerr, data) {
       if (qerr) {
@@ -296,10 +297,12 @@ module.exports = (function() {
     log('get new inbox');
     var self = this;
     var new_array = [];
-	var adminQuery = null;
+	  var adminQuery = null;
     var flag = false;
+    self._sync = new syncdriver(self._appconfig,tdxAPI['_accessToken']);
+    var adminFilter = {flags:{$regex:'^((?!\Seen).)*$'}};
 
-    tdxAPI.query("datasets/" + self._appconfig.emailtable_ID + "/data", {flags:{$regex:'^((?!\Seen).)*$'}}, null, null, function (qerr, data) {
+    tdxAPI.query("datasets/" + self._appconfig.emailtable_ID + "/data", adminFilter, null, null, function (qerr, data) {
       if (qerr) {
         cb(qerr,null, adminQuery);
       }
@@ -335,9 +338,9 @@ module.exports = (function() {
             		var newmessageObj = _.pick(unseen_array[i],["uid", "to", "from", "subject", "date", "flags", "folder"]);
             		new_array.push(newmessageObj);
             		dictInbox[unseen_array[i]['uid']] = newmessageObj;
-            		newmessageObj['from'] = "<b>"+newmessageObj['from']+"<b>";
-            		newmessageObj['subject'] = "<b>"+newmessageObj['subject']+"<b>";
-            		newmessageObj['date'] = "<b>"+newmessageObj['date']+"<b>";
+            		newmessageObj['from'] = "<b>"+newmessageObj['from']+"</b>";
+            		newmessageObj['subject'] = "<b>"+newmessageObj['subject']+"</b>";
+            		newmessageObj['date'] = "<b>"+newmessageObj['date']+"</b>";
           		}
         	}
 		}
@@ -348,7 +351,7 @@ module.exports = (function() {
         }
 		if (adminQuery!=null) {
         	var updateData = {
-            	uid: adminQuery['uid'],
+            	  uid: adminQuery['uid'],
                 textcount: adminQuery['textcount'],
                 text: adminQuery['text'],
                 flags: adminQuery['flags'] + ",\\Seen",
@@ -364,12 +367,16 @@ module.exports = (function() {
             	id: self._appconfig.emailtable_ID,
             	d: updateData
             };
-
-            fileCache.cacheThis(updateObj, function (err) {
-            	if (err) 
-					cb(err, new_array, adminQuery);
-                else
-					cb(null, new_array, adminQuery);
+            var updateString = "["+JSON.stringify(updateData)+"]";
+            self._sync.sendData(updateObj.id,updateString,function(err){
+              if(err) {
+                log('sync error');
+                cb(err, new_array, null);
+              }
+              else {
+                log('no error from sync');
+                cb(err, new_array, adminQuery);
+              }
             });
 		} else
         	cb(null, new_array, null);
@@ -445,40 +452,41 @@ module.exports = (function() {
     }
   }
 
-  Inbox.prototype.sendOneMail = function(msgheader, msgcontent, cb) {
-    var self = this;
-	var mailOptions = {
-    	to: 		msgheader['To'],
-    	cc: 		msgheader['Cc'],
-    	bcc:		msgheader['Bcc'],
-    	subject: 	msgheader['Subject'],
-    	html: 		msgcontent,
-    	flags:		"\\Sent"
-   	};
-
-    var transporter = nodemailer.createTransport({
-        host: self._appconfig.smtpServer,
-        port: self._appconfig.smtpPort,
-        secure: self._appconfig.smtpTLS,
-        auth: {
-            user: self._appconfig.smtpLogin, // Your email id
-            pass: self._appconfig.smtpPass // Your password
-        }
-    });
-
-    transporter.sendMail(mailOptions,function(err,info){
-    	if(err){
-        	log(err);
-        	cb(err,null);
-      	} else cb(null, info.response);
-    });
-  }; 
+  //Inbox.prototype.sendOneMail = function(msgheader, msgcontent, cb) {
+  //  var self = this;
+  //var mailOptions = {
+  //  	to: 		msgheader['To'],
+  //  	cc: 		msgheader['Cc'],
+  //  	bcc:		msgheader['Bcc'],
+  //  	subject: 	msgheader['Subject'],
+  //  	html: 		msgcontent,
+  //  	flags:		"\\Sent"
+  // 	};
+  //
+  //  var transporter = nodemailer.createTransport({
+  //      host: self._appconfig.smtpServer,
+  //      port: self._appconfig.smtpPort,
+  //      secure: self._appconfig.smtpTLS,
+  //      auth: {
+  //          user: self._appconfig.smtpLogin, // Your email id
+  //          pass: self._appconfig.smtpPass // Your password
+  //      }
+  //  });
+  //
+  //  transporter.sendMail(mailOptions,function(err,info){
+  //  	if(err){
+  //      	log(err);
+  //      	cb(err,null);
+  //    	} else cb(null, info.response);
+  //  });
+  //};
 
   /*--------------------------- END update function ---------------------------*/
   Inbox.prototype.send = function(msgheader,msgcontent,cb){
     var self = this;
     log('send email');
-    var replyTo = msgheader['uid']>0?msgheader['uid']:"";
+    /*Google replyTo with threads*/
+    //var replyTo = msgheader['uid']>0?msgheader['uid']:"";
     var draftmsgUid = msgheader['uid'];
     if(typeof draftmsgUid === 'string' && draftmsgUid.indexOf("d") !== -1){
       log('deleting a draft locally');
@@ -520,19 +528,18 @@ module.exports = (function() {
       html: msgcontent['html'],
       flags:"\\Sent"
     };
-    var sentData = {
-      "uid":msgheader['uid'],
-      "modseq":'1',
-      "flags":"\\Sent",
-      "textcount":msgcontent["html"].length,
-      "text":msgcontent["html"],
-      "to":msgheader['To'],
-      "from":"me",
-      "subject":msgheader['Subject'],
-      "date":Date.now()
-    };
+    //var sentData = {
+    //  "modseq":'1',
+    //  "flags":"\\Sent",
+    //  "textcount":msgcontent["html"].length,
+    //  "text":msgcontent["html"],
+    //  "to":msgheader['To'],
+    //  "from":"me",
+    //  "subject":msgheader['Subject'],
+    //  "date":Date.now()
+    //};
 
-    if(msgcontent['attachments'].length>0){
+    if(msgcontent['attachments']!== undefined && msgcontent['attachments'].length>0){
       var attachArray = [];
       _.forEach(msgcontent['attachments'],function(o){
         var attachfileObj = {
@@ -545,7 +552,7 @@ module.exports = (function() {
         attachments:attachArray
       }
       _.assign(mailOptions,attach);
-      _.assign(sentData,attach);
+      //_.assign(sentData,attach);
     }
 
     log('sent results are');
@@ -562,8 +569,8 @@ module.exports = (function() {
       id:self._appconfig.emailtable_ID,
       d:mailOptions
     }
-    log(sentObj);
-    log(mailOptions);
+    //log(sentObj);
+    //log(mailOptions);
 
 
     transporter.sendMail(mailOptions,function(err,info){

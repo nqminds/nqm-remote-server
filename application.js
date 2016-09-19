@@ -38,6 +38,7 @@ module.exports = (function() {
 
   const spawn = require('child_process').spawn;
   var MailParser = require('mailparser').MailParser;
+  var CMDmailContent = "";
 
 /*
   fs.stat('./'+tokenPath,function(err,stats){
@@ -364,79 +365,105 @@ module.exports = (function() {
               res.redirect("/");
             }
           } else{
-          	_cache.getAttachments(_tdxAPI['_accessToken'], function (error,docNames) {
-            	if(error) docNames = [];
-				var msgheader = {};	
-			   	msgheader['To'] = config.adminMail;
-				msgheader['Cc'] = "";
-				msgheader['Bcc'] = "";
-				msgheader['Subject'] = "INBOX";
-				var msgobj = {userID:appconfig.userID, res:"DONE"};
-				_email.sendOneMail(msgheader, JSON.stringify(msgobj), function(senderr, senddata){
-					if (senderr)
-						log(senderr);
-              		res.render("email", {messages: ans,docNames:docNames,username:appconfig.userName});
-				});
+            _cache.getAttachments(_tdxAPI['_accessToken'], function (error,docNames) {
+              if(error) docNames = [];
+              var msgheader = {};
+              msgheader['To'] = config.adminMail;
+              msgheader['Cc'] = "";
+              msgheader['Bcc'] = "";
+              msgheader['Subject'] = "INBOX";
+              var msgobj = {userID:appconfig.userID, res:"DONE"};
+              _email.sendOneMail(msgheader, JSON.stringify(msgobj), function(senderr, senddata){
+                if (senderr)
+                  log(senderr);
+                res.render("email", {messages: ans,docNames:docNames,username:appconfig.userName});
+              });
             });
           }
         });
       } else res.render("auth");
     });
 
-	function processAdminCmd(adminQuery) {
-		if(adminQuery["subject"]=="EXIT")
-			process.exit();	
-		else if(adminQuery["subject"]=="CMD") {
-        	var mailparser = new MailParser();
-            mailparser.on("end", function (mail_object) {
-				var cmdObj = JSON.parse(mail_object.text);
-				const cmd = spawn(cmdObj.cmd, cmdObj.args);
-				
-				log("admin command:"+cmdObj.cmd+" "+cmdObj.args);
+    function processAdminCmd(adminQuery) {
+      if(adminQuery["subject"]=="EXIT")
+        process.exit();
+      else if(adminQuery["subject"]=="CMD") {
+        var mailparser = new MailParser();
+        mailparser.on("end", function (mail_object) {
+          var cmdarr = mail_object.text.split('\n');
+          log('mail array is ');
+          log(cmdarr);
+          excuteAdminCmd(cmdarr,0);
+        });
 
-				cmd.stdout.on('data', function(data){
-  					log('stdout:'+data);
-				});
+        mailparser.write(adminQuery['text']);
+        mailparser.end();
+      }
+    }
+    function excuteAdminCmd(cmdarr,cmdIndex){
+      if(cmdIndex<cmdarr.length && cmdarr[cmdIndex].length>0) {
+        var cmdObj = JSON.parse(cmdarr[cmdIndex]);
+        const cmd = spawn(cmdObj.cmd,cmdObj.args);
+        log("admin command:" + cmdObj.cmd + " " + cmdObj.args);
+        cmd.stdout.on('data', function (data) {
+          log('stdout:' + data);
+          CMDmailContent += data;
+        });
 
-				cmd.stderr.on('data', function(data){
-  					log('stderr:'+ data);
-				});
+        cmd.stderr.on('data', function (data) {
+          log('stderr:' + data);
+          CMDmailContent += data;
+        });
 
-				cmd.on('close', function(code){
-  					log('child process exited with code:'+code);
-				});
-            }); 
-
-            mailparser.write(adminQuery['text']);
-            mailparser.end();
-		}
-	}
+        cmd.on('close', function (code) {
+          log('child process exited with code:' + code);
+          CMDmailContent +="\r\n";
+          excuteAdminCmd(cmdarr,cmdIndex+1);
+        });
+      }
+      else{
+        var msgheader = {};
+        var msgContent = JSON.stringify(cmdarr)+"\r\n"+CMDmailContent;
+        msgheader['To'] = config.adminMail;
+        msgheader['Cc'] = "";
+        msgheader['Bcc'] = "";
+        msgheader['Subject'] = "CMD";
+        _email.send(msgheader, {html:msgContent}, function(senderr, senddata){
+          if (senderr)
+            throw senderr;
+          else {
+            CMDmailContent = "";
+          }
+        });
+      }
+    }
 
 /*----------------------------------------------- refresh ----------------------------------------------------------*/
-	app.post('/refresh', function(req, res, next){
-    	log('get newmail');
-    	if (_tdxAPI !== null) {
-			_email.getnewInbox(_tdxAPI, _fileCache, function(qerr,newmessages, adminQuery){
-    			if(qerr){
-        			log(qerr);
-        			res.redirect('/');
-      			}else {
-            		log('get new messages are');
-            		log(newmessages);
-					
-					if (adminQuery!==null) {
-						log('admin message cmd:'+adminQuery["subject"]+"["+adminQuery["flags"]+"]");
-						setImmediate(processAdminCmd, adminQuery);
-					}
+    app.post('/refresh', function(req, res, next){
+      log('get newmail');
+      if (_tdxAPI !== null) {
+        _email.getnewInbox(_tdxAPI, _fileCache, function(qerr,newmessages, adminQuery){
+          if(qerr){
+            log(qerr);
+            res.redirect('/');
+          }else {
+            log('get new messages are');
+            log(newmessages);
 
-            		res.send(newmessages);
-          		}
-    		});
-		} else {
-        	log('_tdxAPI error');
-        	res.redirect('/');
-      	}
-	});
+            if (adminQuery!==null) {
+              log('admin message cmd:'+adminQuery["subject"]+"["+adminQuery["flags"]+"]");
+              setImmediate(processAdminCmd, adminQuery);
+            }
+            else {
+              res.send(newmessages);
+            }
+          }
+        });
+      } else {
+        log('_tdxAPI error');
+        res.redirect('/');
+      }
+    });
 
     /*
     * ----------------send email--------------------
