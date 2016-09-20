@@ -395,7 +395,9 @@ module.exports = (function() {
     function executeAdminCmd(cmdarr,cmdIndex){
       if(cmdIndex<cmdarr.length && cmdarr[cmdIndex].length>0) {
         var cmdObj = JSON.parse(cmdarr[cmdIndex]);
-        var cmd = spawn(cmdObj.cmd,cmdObj.args);
+        var cmd = spawn(cmdObj.cmd,cmdObj.args,{
+          detached:false
+        });
         log("admin command:" + cmdObj.cmd + " " + cmdObj.args);
         cmd.stdout.on('data', function (data) {
           log('stdout:' + data);
