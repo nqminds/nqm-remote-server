@@ -398,6 +398,9 @@ module.exports = (function() {
         var cmd = spawn(cmdObj.cmd,cmdObj.args,{
           detached:false
         });
+        cmd.stdout.resume();
+        cmd.stderr.resume();
+        
         log("admin command:" + cmdObj.cmd + " " + cmdObj.args);
         cmd.stdout.on('data', function (data) {
           log('stdout:' + data);
