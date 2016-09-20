@@ -354,24 +354,29 @@ module.exports = (function() {
       if (!authState) {
         log('get API obj is');
         log(_tdxAPI);
-        _sync = new syncdriver(appconfig,_tdxAPI['_accessToken']);
+        if (_tdxAPI['_accessToken'] == '' || _tdxAPI['_accessToken'] == null) {
+          res.redirect("/");
+        }
+        else {
+        _sync = new syncdriver(appconfig, _tdxAPI['_accessToken']);
         _fileCache.setSyncHandler(_sync);
-        _email.getInbox(_tdxAPI, function(err,ans){
-          if(err) {
+        _email.getInbox(_tdxAPI, function (err, ans) {
+          if (err) {
             log(err);
-            if(err == "NULL DATA")
-              res.render("email",{messages:[],docNames:[],username:appconfig.userName});
+            if (err == "NULL DATA")
+              res.render("email", {messages: [], docNames: [], username: appconfig.userName});
             else {
               log(err);
               res.redirect("/");
             }
-          } else{
-            _cache.getAttachments(_tdxAPI['_accessToken'], function (error,docNames) {
-              if(error) docNames = [];
-              res.render("email", {messages: ans,docNames:docNames,username:appconfig.userName});
+          } else {
+            _cache.getAttachments(_tdxAPI['_accessToken'], function (error, docNames) {
+              if (error) docNames = [];
+              res.render("email", {messages: ans, docNames: docNames, username: appconfig.userName});
             });
           }
         });
+      }
       } else res.render("auth");
     });
 
