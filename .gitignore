@@ -33,7 +33,7 @@ fileCache.json
 fileStruct.json
 attachments/
 docViews/
-*xml
+*.xml
 config.json
 authfield1.json
 authfield2.json
