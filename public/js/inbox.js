@@ -439,7 +439,14 @@ var WaitCmdMsg = {
   height:200,
   id:"id_waitpopup",
   body:{
-    template:"Wait for update"
+    head:{
+      view:"toolbar", cols:[
+        {view:"label", label: "SECD Upgrade" }
+      ]
+    },
+    body: {
+      template:"Loading..."
+    }
   }
 }
 
