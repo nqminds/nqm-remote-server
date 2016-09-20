@@ -433,7 +433,7 @@ var settings = {
 };
 
 var WaitCmdMsg = {
-  view:"popup",
+  view:"window",
   position:"center",
   width: 380,
   height:200,
