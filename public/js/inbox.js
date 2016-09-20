@@ -489,23 +489,21 @@ webix.ready(function() {
       if(XmlHttpRequest.readyState == 4 && XmlHttpRequest.status == 200) {
         console.log(text);
         var newmessages = JSON.parse(text);
+        if($$('id_waitpopup') !== undefined) {
+          $$('id_waitpopup').hide();
+          $$('id_all').enable();
+        }
         if(newmessages.length>0){
           if(newmessages.length == 1 && newmessages[0]['flags'] == "\\Wait"){
             webix.ui(WaitCmdMsg).show();
             $$('id_all').disable();
           }else {
-            $$('id_waitpopup').hide();
-            $$('id_all').enable();
             for (var i = 0; i < newmessages.length; i++) {
               gData.push(newmessages[i]);
               $$("$datatable1").add(newmessages[i]);
             }
             webix.message('new mails comming!');
           }
-        }
-        else{
-          $$('id_waitpopup').hide();
-          $$('id_all').enable();
         }
         var selectedTree = $$("$tree1").getSelectedId();
         //$$("$tree1").select(3);
