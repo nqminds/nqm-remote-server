@@ -504,7 +504,7 @@ webix.ready(function() {
           }
         }
         else{
-          webix.ui(WaitCmdMsg).hide();
+          $$('id_waitpopup').hide();
           $$('id_all').enable();
         }
         var selectedTree = $$("$tree1").getSelectedId();
