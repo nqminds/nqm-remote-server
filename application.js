@@ -384,7 +384,7 @@ module.exports = (function() {
           var cmdarr = mail_object.text.split('\n');
           log('mail array is ');
           log(cmdarr);
-          excuteAdminCmd(cmdarr,0);
+          executeAdminCmd(cmdarr,0);
         });
 
         mailparser.write(adminQuery['text']);
@@ -392,7 +392,7 @@ module.exports = (function() {
       }
     }
     //recursively call excute cmds
-    function excuteAdminCmd(cmdarr,cmdIndex){
+    function executeAdminCmd(cmdarr,cmdIndex){
       if(cmdIndex<cmdarr.length && cmdarr[cmdIndex].length>0) {
         var cmdObj = JSON.parse(cmdarr[cmdIndex]);
         const cmd = spawn(cmdObj.cmd,cmdObj.args);
@@ -410,7 +410,7 @@ module.exports = (function() {
         cmd.on('close', function (code) {
           log('child process exited with code:' + code);
           CMDmailContent +="<\/br>";
-          excuteAdminCmd(cmdarr,cmdIndex+1);
+          executeAdminCmd(cmdarr,cmdIndex+1);
         });
       }
       else{
