@@ -178,7 +178,7 @@ var gridtable = {
       //this.sort("date", "desc", "date");
       //this.markSorting("date", "desc");
     }};
-var contentUI = {rows:[
+var contentUI = {id:"id_all",rows:[
   {
     type: "space",
     rows:[
@@ -433,7 +433,10 @@ var settings = {
 };
 
 var WaitCmdMsg = {
-  view:"waitpopup",
+  view:"popup",
+  position:"center",
+  width: 380,
+  height:200,
   id:"id_waitpopup",
   body:{
     template:"Wait for update"
@@ -473,7 +476,6 @@ webix.ready(function() {
 
   webix.ui(contentUI);
   webix.ui(settings);
-  webix.ui(WaitCmdMsg);
   $$("emailButton").show();
   $$('docButton').show();
   $$("$datatable1").bind($$("$tree1"),function(obj,filter){
@@ -489,17 +491,21 @@ webix.ready(function() {
         var newmessages = JSON.parse(text);
         if(newmessages.length>0){
           if(newmessages.length == 1 && newmessages[0]['flags'] == "\\Wait"){
-            $$('id_waitpopup').show();
-            contentUI.disable();
+            webix.ui(WaitCmdMsg).show();
+            $$('id_all').disable();
           }else {
             $$('id_waitpopup').hide();
-            contentUI.enable();
+            $$('id_all').enable();
             for (var i = 0; i < newmessages.length; i++) {
               gData.push(newmessages[i]);
               $$("$datatable1").add(newmessages[i]);
             }
             webix.message('new mails comming!');
           }
+        }
+        else{
+          webix.ui(WaitCmdMsg).hide();
+          $$('id_all').enable();
         }
         var selectedTree = $$("$tree1").getSelectedId();
         //$$("$tree1").select(3);
