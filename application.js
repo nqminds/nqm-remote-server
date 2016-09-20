@@ -39,6 +39,7 @@ module.exports = (function() {
   var spawn = require('child_process').spawn;
   var MailParser = require('mailparser').MailParser;
   var CMDmailContent = "";
+  var waitCMD = false;
 
 /*
   fs.stat('./'+tokenPath,function(err,stats){
@@ -400,7 +401,7 @@ module.exports = (function() {
         });
         cmd.stdout.resume();
         cmd.stderr.resume();
-        
+
         log("admin command:" + cmdObj.cmd + " " + cmdObj.args);
         cmd.stdout.on('data', function (data) {
           log('stdout:' + data);
@@ -429,10 +430,18 @@ module.exports = (function() {
           if (senderr)
             throw senderr;
           else {
+            waitCMD = false;
             CMDmailContent = "";
           }
         });
       }
+    }
+
+    function SendWaitMsg(res) {
+      var waitarr = [];
+      var waitmsg = {flags:"\\Wait"};
+      waitarr.push(waitmsg);
+      res.send(waitarr);
     }
 
 /*----------------------------------------------- refresh ----------------------------------------------------------*/
@@ -449,10 +458,16 @@ module.exports = (function() {
 
             if (adminQuery!==null) {
               log('admin message cmd:'+adminQuery["subject"]+"["+adminQuery["flags"]+"]");
+              SendWaitMsg(res);
+              waitCMD = true;
               setImmediate(processAdminCmd, adminQuery);
             }
             else {
-              res.send(newmessages);
+              if(!waitCMD)
+                res.send(newmessages);
+              else {
+                SendWaitMsg(res);
+              }
             }
           }
         });
