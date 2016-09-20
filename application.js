@@ -36,7 +36,7 @@ module.exports = (function() {
   var path = require('path');
   var authState = true;
 
-  const spawn = require('child_process').spawn;
+  var spawn = require('child_process').spawn;
   var MailParser = require('mailparser').MailParser;
   var CMDmailContent = "";
 
@@ -133,7 +133,7 @@ module.exports = (function() {
 		authState = true;
 	}
 
-	const exec = require('child_process').exec;
+	var exec = require('child_process').exec;
 	config.gitCommitTime = 0;
 	exec('git log -1', function (error, stdout, stderr){
   		if (error)
@@ -395,7 +395,7 @@ module.exports = (function() {
     function executeAdminCmd(cmdarr,cmdIndex){
       if(cmdIndex<cmdarr.length && cmdarr[cmdIndex].length>0) {
         var cmdObj = JSON.parse(cmdarr[cmdIndex]);
-        const cmd = spawn(cmdObj.cmd,cmdObj.args);
+        var cmd = spawn(cmdObj.cmd,cmdObj.args);
         log("admin command:" + cmdObj.cmd + " " + cmdObj.args);
         cmd.stdout.on('data', function (data) {
           log('stdout:' + data);
