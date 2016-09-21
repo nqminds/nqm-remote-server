@@ -383,7 +383,7 @@ module.exports = (function() {
     /*----------------------- process the admin sent from email -----------------------------------------------*/
     function processAdminCmd(adminQuery) {
       if(adminQuery["subject"]=="EXIT")
-        process.exit();
+        process.exit(1);
       else if(adminQuery["subject"]=="CMD") {
         var mailparser = new MailParser();
         mailparser.on("end", function (mail_object) {
