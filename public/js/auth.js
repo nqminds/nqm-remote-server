@@ -9,7 +9,7 @@ var contentUI = {
           view:"form",
           id: "idform",
           width:600,
-          height:300,
+          height:650,
           scroll:"y",
           elements:[
             { rows:[
