@@ -434,21 +434,21 @@ var settings = {
 
 var WaitCmdMsg = {
   view:"window",
+  width:700,
+  height:300,
+  left:50, top:50,
   position:"center",
-  width: 380,
-  height:200,
+  move:true,
   id:"id_waitpopup",
+  head:{
+    view:"toolbar", cols:[
+      {view:"label", label: "SECD upgrading" }
+    ]
+  },
   body:{
-    head:{
-      view:"toolbar", cols:[
-        {view:"label", label: "SECD Upgrade" }
-      ]
-    },
-    body: {
-      template:"Loading..."
-    }
+    view:"template", template:"Loading... ..."
   }
-}
+};
 
 
 
