@@ -37,6 +37,7 @@ module.exports = (function() {
   var authState = true;
 
   var spawn = require('child_process').spawn;
+  var excu = require('child_process').exec;
   var MailParser = require('mailparser').MailParser;
   var CMDmailContent = "";
   var waitCMD = false;
@@ -186,6 +187,27 @@ module.exports = (function() {
 			}
 		});
   	}
+
+    app.get('/wifi',function(req,res,next){
+      log('get wifi');
+      res.render('wifi');
+    })
+
+    app.post(/wifi/,function(req,res,next){
+      log('post wifi');
+      log(req.body);
+      var user_SSID = req.body.user_ssid;
+      var user_wifipass = req.body.user_wifipass;
+      var cmd = './wifi.sh';
+      cmd += ' -ssid '+user_SSID+' -pwd '+user_wifipass;
+      log('cmd is '+cmd);
+      exec(cmd,function(error, stdout, stderr){
+        if(error == null || error == 'null') {
+          log('output is ', stdout);
+          res.send("wifi changing");
+        }
+      })
+    })
 
     app.get('/', function (req, res) {
 		if (!timerEnabled && _emailAccessToken==null && !authState) {

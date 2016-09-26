@@ -1,0 +1,18 @@
+doctype html
+html
+    head
+        meta(name='viewport', content='width=device-width, initial-scale=1')
+        title= title
+        link(rel='stylesheet', href='/css/bootstrap.min.css')
+        link(rel='stylesheet', href='/css/wifi.css')
+        script(src='/js/jquery-3.1.1.min.js', type='text/javascript')
+
+    body
+        block content
+            .container
+                .wrapper
+                form.form-signin(action="/wifi", method="post")
+                    h2.form-signin-heading WIFI Detailes
+                    input.form-control(type="text", name="user_ssid", placeholder="wifi name ")
+                    input.form-control(type="password", name="user_wifipass", placeholder="wifi password")
+                    button.btn.btn-large.btn-primary(type="submit") SUBMIT
