@@ -196,7 +196,6 @@ module.exports = (function() {
     app.post("/wifi",function(req,res,next){
       log('post wifi');
       log(req.body);
-      res.sendStatus(200);
       var user_SSID = req.body.user_ssid;
       var user_wifipass = req.body.user_wifipass;
       var disable_wifi = req.body.disable_wifi?1:0;
