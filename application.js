@@ -193,19 +193,20 @@ module.exports = (function() {
       res.render('wifi');
     })
 
-    app.post(/wifi/,function(req,res,next){
+    app.post("/wifi",function(req,res,next){
       log('post wifi');
       log(req.body);
+      res.sendStatus(200);
       var user_SSID = req.body.user_ssid;
       var user_wifipass = req.body.user_wifipass;
-      var disable_wifi = req.body.disable_wifi;
+      var disable_wifi = req.body.disable_wifi?1:0;
       var cmd = './wifi.sh';
       cmd += ' -ssid '+user_SSID+' -pwd '+user_wifipass+' -disable '+disable_wifi;
       log('cmd is '+cmd);
       exec(cmd,function(error, stdout, stderr){
         if(error == null || error == 'null') {
           log('output is ', stdout);
-          res.send("wifi changing");
+          res.sendStatus(200);
         }
       })
     })

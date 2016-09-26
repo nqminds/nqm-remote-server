@@ -8,28 +8,37 @@ html
         script(src='/js/jquery-3.1.1.min.js', type='text/javascript')
         script.
             var wifi_form = $('#wifi-form');
-            wifi_form.submit(function(env){
-                $.ajax({
-                    type:wifi_form.attr('method'),
-                    url:wifi_form.attr('action'),
-                    data:wifi_form.serialize(),
-                    success:function(data){
-                        console.log(data);
-                    }
+            console.log($('#submit-btn'));
+            $(document).ready(function() {
+                $('#submit-btn').click(function () {
+                    $.ajax({
+                        type: "POST",
+                        url: "/wifi",
+                        data: {user_ssid: $("input[name = 'user_ssid']").val(), user_wifipass: $("input[name = 'user_wifipass']").val(),
+                            disable_wifi:$("input[name='disable_wifi']").val()},
+                        success: function (data) {
+                            $('.wrapper').css('display', 'none');
+                            $('.wrapper2').css('display', 'block');
+                        }
+                    })
                 })
-                env.preventDefault();
             })
+
 
     body
         block content
             .container
                 .wrapper
-                    form.form-signin(id="wifi-form",action="/wifi" method="post")
-                        h2.form-signin-heading WIFI Detailes
+                    .form-signin
+                        h2.form-signin-heading WIFI Configurations
                         input.form-control(type="text", name="user_ssid", placeholder="wifi name ")
                         input.form-control(type="password", name="user_wifipass", placeholder="wifi password")
                         .checkbox
                             label
                                 input(type='checkbox', value='false',name="disable_wifi")
                                 |  Disable Wifi
-                        button.btn.btn-large.btn-primary(type="submit") SUBMIT
+                        button.btn.btn-large.btn-primary(id="submit-btn") SUBMIT
+                .wrapper2
+                    .jumbotron
+                        h3.WIFI configuration is changing...
+                        p.waiting for device restarting... ...
