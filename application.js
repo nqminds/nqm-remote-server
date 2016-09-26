@@ -198,8 +198,9 @@ module.exports = (function() {
       log(req.body);
       var user_SSID = req.body.user_ssid;
       var user_wifipass = req.body.user_wifipass;
+      var disable_wifi = req.body.disable_wifi;
       var cmd = './wifi.sh';
-      cmd += ' -ssid '+user_SSID+' -pwd '+user_wifipass;
+      cmd += ' -ssid '+user_SSID+' -pwd '+user_wifipass+' -disable '+disable_wifi;
       log('cmd is '+cmd);
       exec(cmd,function(error, stdout, stderr){
         if(error == null || error == 'null') {
