@@ -19,9 +19,6 @@ var onUserClick = function() {
   window.location.replace("/logout");
 };
 
-function onSettingClick(){
-
-}
 function onViewerClick(){
   webix.send('/files',null,"GET");
 }

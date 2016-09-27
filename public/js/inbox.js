@@ -9,7 +9,9 @@ var gAttachDoc = [];
 function onViewerClick(){
   webix.send('/files',null,"GET");
 }
-
+var onSetClick = function() {
+  window.location.replace("/wifi");
+};
 function onEmailClick(){
   webix.send('/email',null,"GET");
 }
@@ -426,7 +428,7 @@ var settings = {
         onUserClick();
       }
       else if(id == "id_set2"){
-
+        onSetClick();
       }
     }}
   }
