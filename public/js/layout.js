@@ -12,6 +12,9 @@ var onMainClick = function(){
   webix.send('/',null,"GET");
 };
 
+var onSetClick = function() {
+  window.location.replace("/wifi");
+};
 var onUserClick = function() {
   window.location.replace("/logout");
 };
@@ -43,7 +46,9 @@ var settings = {
       if(id == "id_set1"){
         onUserClick();
       }
-      else{}
+      else{
+        onSetClick();
+      }
     }}
   }
 };
