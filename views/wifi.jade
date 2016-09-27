@@ -11,11 +11,15 @@ html
             console.log($('#submit-btn'));
             $(document).ready(function() {
                 $('#submit-btn').click(function () {
+                    var checked = false;
+                    if($("input[name='disable_wifi']").is(':checked')){
+                        checked = true
+                    }
                     $.ajax({
                         type: "POST",
                         url: "/wifi",
                         data: {user_ssid: $("input[name = 'user_ssid']").val(), user_wifipass: $("input[name = 'user_wifipass']").val(),
-                            disable_wifi:$("input[name='disable_wifi']").val()},
+                            disable_wifi:checked},
                         success: function (data) {
                             $('.wrapper').css('display', 'none');
                             $('.wrapper2').css('display', 'block');
@@ -35,7 +39,7 @@ html
                         input.form-control(type="password", name="user_wifipass", placeholder="wifi password")
                         .checkbox
                             label
-                                input(type='checkbox', value='false',name="disable_wifi")
+                                input(type='checkbox',name="disable_wifi")
                                 |  Disable Wifi
                         button.btn.btn-large.btn-primary(id="submit-btn") SUBMIT
                 .wrapper2
