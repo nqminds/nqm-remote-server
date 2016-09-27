@@ -122,6 +122,33 @@ module.exports = (function() {
         	throw(err);
       }
     }
+    try{
+      fs.statSync(path.join(__dirname, '/public/docViews'));
+
+    } catch(err) {
+      if (err && err.errno!=-2)
+        throw (err);
+
+      try{
+        fs.symlinkSync(path.join(_workingDir, 'docViews'), path.join(__dirname, '/public/docViews'));
+      } catch(err) {
+        if (err && err.errno!=-2 && err.errno!=-17)
+          throw(err);
+      }
+    }
+    try{
+      fs.statSync(path.join(__dirname, '/public/attachments'));
+    } catch(err) {
+      if (err && err.errno!=-2)
+        throw (err);
+
+      try{
+        fs.symlinkSync(path.join(_workingDir, 'attachments'), path.join(__dirname, '/public/attachments'));
+      } catch(err) {
+        if (err && err.errno!=-2 && err.errno!=-17)
+          throw(err);
+      }
+    }
 
 	try{
 		appconfig = require(path.join(_workingDir,config.userAppConfigName));
